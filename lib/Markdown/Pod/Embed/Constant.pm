@@ -16,7 +16,7 @@
 
 #  Pragma
 #
-package App::Markpod::Constant;
+package Markdown::Pod::Embed::Constant;
 use strict qw(vars);
 use warnings;
 use vars qw($VERSION @ISA %EXPORT_TAGS @EXPORT_OK @EXPORT %Constant);
@@ -58,4 +58,3 @@ foreach (keys %Constant) {${$_}=$Constant{$_}}
 @EXPORT_OK=@EXPORT;
 %EXPORT_TAGS=(all => [@EXPORT_OK]);
 $_=\%Constant;
-

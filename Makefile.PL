@@ -7,9 +7,10 @@ if ($mm_ver =~ /_/) { # dev version
     die $@ if $@;
 }
 my %WriteMakefile=(
-    NAME                => 'markpod',
-    VERSION_FROM        => 'bin/markpod.pl',
-    ABSTRACT_FROM       => 'bin/markpod.pl',
+    NAME                => 'Markdown::Pod::Embed',
+    DISTNAME            => 'Markdown-Pod-Embed',
+    VERSION_FROM        => 'lib/Markdown/Pod/Embed.pm',
+    ABSTRACT_FROM       => 'lib/Markdown/Pod/Embed.pm',
     EXE_FILES           => ['bin/markpod.pl'],
     LICENSE             => 'perl',
     AUTHOR              => 'Andrew Speer <andrew.speer@isolutions.com.au>',
@@ -55,22 +56,55 @@ while (my($mm_ver_test, $ar)=each %MM_Compat) {
     }
 }
 WriteMakefile(%WriteMakefile);
+
 package MY;
 use File::Copy qw(copy);
+use File::Spec;
+use Tie::File;
 use Cwd qw(abs_path);
+
 sub post_initialize {
+
     #  Add license file, other support files here
     #
     my $mm_or=shift();
     $mm_or->{'PM'}{'LICENSE'}='$(INST_LIBDIR)/$(BASEEXT)/LICENSE' if -e 'LICENSE';
+    
+    
+    #  Add git ref if needed
+    #
+    if (grep {$mm_or->{'VERSION_FROM'} eq $_} @{$mm_or->{'EXE_FILES'}}) {
+        push @{$mm_or->{'EXE_FILES'}}, $mm_or->{'VERSION_FROM'}.'.sha';
+    }
+    
+    
+    #  Don't install docs/tmp files etc.
+    #
+    my %pm=map { $_=>$mm_or->{'PM'}{$_} } grep { !/\.(?:md|xml|pod|bak|tmp|0)$/ } keys %{$mm_or->{'PM'}};
+    $mm_or->{'PM'}=\%pm;
+    
+    
+    #  Update Git Ref in file if needed/available
+    #
+    my $devnull=File::Spec->devnull();
+    if (my $git_version=qx(git rev-parse --short HEAD 2>$devnull)) {
+        chomp $git_version;
+        tie my @lines, 'Tie::File', $mm_or->{'VERSION_FROM'} . '.sha' || die "error on Tie::File, $!";
+        $lines[0]=$git_version;
+    }
     $mm_or->SUPER::post_initialize;
-};
+
+}
+
+
 sub MM::init_main {
 
+    #  Strip .pl, .sh extension from script files before installing
+    #
     my $mm_or=shift();
     my @fn;
     foreach my $fn (@{$mm_or->{'EXE_FILES'}}) {
-        (my $fn_new=$fn)=~s/\.pl$//;
+        (my $fn_new=$fn)=~s/\.(?:pl|sh)$//;
         if ($fn_new ne $fn) {
             -f $fn_new || do { eval{symlink(abs_path($fn), $fn_new)} || copy(abs_path($fn), $fn_new) }
         }

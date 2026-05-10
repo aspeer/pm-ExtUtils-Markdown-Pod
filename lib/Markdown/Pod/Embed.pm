@@ -14,16 +14,16 @@
 
 #  Compiler pragma
 #
-package App::Markpod;
+package Markdown::Pod::Embed;
 use strict;
 use warnings;
-use vars qw($VERSION @EXPORT_OK);
+use vars qw($VERSION @EXPORT_OK $VERSION_GIT_SHA $AUTHORITY);
 
 
 #  Base Packages
 #
-use App::Markpod::Util;
-use App::Markpod::Constant;
+use Markdown::Pod::Embed::Util;
+use Markdown::Pod::Embed::Constant;
 
 
 #  Base external modules
@@ -38,9 +38,12 @@ use PPI;
 use Markdown::Pod;
 
 
-#  Version Info, must be all one line for MakeMaker, CPAN.
+#  Version information
 #
-$VERSION='0.013';
+$AUTHORITY='cpan:ASPEER';
+$VERSION='0.004';
+$VERSION_GIT_SHA=do { local (@ARGV, $/) = ($_=__FILE__.'.sha'); <> if -f $_ };
+chomp($VERSION_GIT_SHA) if defined $VERSION_GIT_SHA;
 
 
 #  Done
@@ -96,18 +99,30 @@ sub markpod_process {
         return \undef;
     };
     debug('pod_or_ar: %s', Dumper($pod_or_ar));
-    my ($md, $pod_changed, @pod);
+    my $sidecar_md_sr=$self->markpod_markdown_file_read($fn);
+    my ($md, $pod_changed, @pod, @raw_pod)=(undef, 0);
     foreach my $pod_or (@{$pod_or_ar}) {
-        $md.=(my $pod_md=${
-            $self->markpod_markdown_extract($pod_or->content) ||
-                return err();
-        });
+        my $pod_content=$pod_or->content();
+        my $pod_md_sr=$self->markpod_markdown_extract($pod_content);
+        if (!$pod_md_sr && $sidecar_md_sr) {
+            $pod_md_sr=$sidecar_md_sr;
+            undef $sidecar_md_sr;
+        }
+        unless ($pod_md_sr) {
+            debug("pod: no markdown source, preserving existing POD");
+            push @pod, $pod_content;
+            push @raw_pod, $pod_content;
+            next;
+        }
+        my $pod_md=${$pod_md_sr};
+        $md.=$pod_md;
         my $pod=${
             $self->markpod_pod_merge($pod_md) ||
                 return err();
         };
+        push @raw_pod, $self->{'pod'};
         $pod.="\n=cut\n";
-        if ($pod_changed += ($pod ne $pod_or->content())) {
+        if ($pod_changed += ($pod ne $pod_content)) {
             debug("pod: updating");
             $pod_or->set_content($pod);
         }
@@ -120,7 +135,7 @@ sub markpod_process {
     
     #  Join POD
     #
-    my $pod=join($/, @pod);
+    my $pod=join($/, @raw_pod);
     
     
     #  Store results
@@ -134,7 +149,7 @@ sub markpod_process {
     )}=(
         
         $pod_changed,
-        $md,
+        $md || '',
         $ppi_doc_or
     );
     
@@ -143,6 +158,22 @@ sub markpod_process {
     #
     return \$pod_changed;
     
+}
+
+
+sub markpod_markdown_file_read {
+
+    my ($self, $fn)=@_;
+    my $md_fn="${fn}.md";
+    return undef unless -f $md_fn;
+    my $fh=IO::File->new($md_fn, 'r') ||
+        return err("unable to open markdown file $md_fn, $!");
+    local $/=undef;
+    my $md=<$fh>;
+    chomp($md);
+    debug("using markdown sidecar file: $md_fn");
+    return \$md;
+
 }
 
 
@@ -188,7 +219,7 @@ sub markpod_markdown_extract {
         $md=$2;
     }
     else {
-        $md='';
+        return undef;
     }
     chomp($md);
     debug('extracted markdown %s', Dumper(\$md));
@@ -258,14 +289,14 @@ __END__
 
 # NAME
 
-App::Markpod - convert markdown formatted pod to pure pod
+Markdown::Pod::Embed - convert markdown formatted pod to pure pod
 
 # SYNOPSIS
 
 ```perl
 
-use App::Markpod
-my $markpod_or=App::Markpod ->new()
+use Markdown::Pod::Embed
+my $markpod_or=Markdown::Pod::Embed ->new()
 $markpod_or->markpod_process('foo.pl');
 my $pod_sr=$markpod_or->pod()
 print ${$pod_sr}
@@ -280,9 +311,9 @@ Helper module for the markpod utility that can also be used independently.
 
 **new()** 
 
-Create a new App::Markpod reference. Usage:
+Create a new Markdown::Pod::Embed reference. Usage:
 
-`my $markpod_or=App::Markpod->new(\%opt)`
+`my $markpod_or=Markdown::Pod::Embed->new(\%opt)`
 
 See OPTIONS section for options that can be supplied to creator
 
@@ -317,15 +348,15 @@ Full license text is available at:
 
 =head1 NAME
 
-App::Markpod - convert markdown formatted pod to pure pod
+Markdown::Pod::Embed - convert markdown formatted pod to pure pod
 
 
 =head1 SYNOPSIS
 
 
  
- use App::Markpod
- my $markpod_or=App::Markpod ->new()
+ use Markdown::Pod::Embed
+ my $markpod_or=Markdown::Pod::Embed ->new()
  $markpod_or->markpod_process('foo.pl');
  my $pod_sr=$markpod_or->pod()
  print ${$pod_sr}
@@ -339,9 +370,9 @@ Helper module for the markpod utility that can also be used independently.
 
 B<new()> 
 
-Create a new App::Markpod reference. Usage:
+Create a new Markdown::Pod::Embed reference. Usage:
 
-C<<< my $markpod_or=App::Markpod->new(\%opt) >>>
+C<<< my $markpod_or=Markdown::Pod::Embed->new(\%opt) >>>
 
 See OPTIONS section for options that can be supplied to creator
 

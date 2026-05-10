@@ -1,6 +1,6 @@
-requires 'App::Markpod';
-requires 'App::Markpod::Constant';
-requires 'App::Markpod::Util';
+requires 'Markdown::Pod::Embed';
+requires 'Markdown::Pod::Embed::Constant';
+requires 'Markdown::Pod::Embed::Util';
 requires 'FindBin';
 requires 'Getopt::Long';
 requires 'Markdown::Pod';

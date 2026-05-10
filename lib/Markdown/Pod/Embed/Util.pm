@@ -11,7 +11,7 @@
 #  <http://dev.perl.org/licenses/>
 #
 
-package App::Markpod::Util;
+package Markdown::Pod::Embed::Util;
 
 
 #  Pragma

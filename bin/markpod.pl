@@ -23,9 +23,9 @@ use warnings;
 
 #  Base External modules
 #
-use App::Markpod;
-use App::Markpod::Util;
-use App::Markpod::Constant;
+use Markdown::Pod::Embed;
+use Markdown::Pod::Embed::Util;
+use Markdown::Pod::Embed::Constant;
 
 
 #  Other external modules
@@ -60,7 +60,7 @@ use constant {
     #  Option defaults
     #
     OPTION_HR => {
-        %{$OPTION_HR},                              # From App::Markpod::Constant;
+        %{$OPTION_HR},                              # From Markdown::Pod::Embed::Constant;
         %{do(glob("~/.${Script}.option")) || {}}    # || {} avoids warning
     },
 
@@ -90,7 +90,7 @@ sub main {    #no subsort
 
     #  Get base object blassed with options as first arg.
     #
-    my $self=App::Markpod->new((my $opt_hr=shift()));
+    my $self=Markdown::Pod::Embed->new((my $opt_hr=shift()));
     
     
     #  Output file name. Might be empty

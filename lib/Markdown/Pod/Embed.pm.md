@@ -1,14 +1,14 @@
 
 # NAME
 
-App::Markpod - convert markdown formatted pod to pure pod
+Markdown::Pod::Embed - convert markdown formatted pod to pure pod
 
 # SYNOPSIS
 
 ```perl
 
-use App::Markpod
-my $markpod_or=App::Markpod ->new()
+use Markdown::Pod::Embed
+my $markpod_or=Markdown::Pod::Embed ->new()
 $markpod_or->markpod_process('foo.pl');
 my $pod_sr=$markpod_or->pod()
 print ${$pod_sr}
@@ -23,9 +23,9 @@ Helper module for the markpod utility that can also be used independently.
 
 **new()** 
 
-Create a new App::Markpod reference. Usage:
+Create a new Markdown::Pod::Embed reference. Usage:
 
-`my $markpod_or=App::Markpod->new(\%opt)`
+`my $markpod_or=Markdown::Pod::Embed->new(\%opt)`
 
 See OPTIONS section for options that can be supplied to creator
 
@@ -54,4 +54,3 @@ the same terms as the Perl 5 programming language system itself.
 Full license text is available at:
 
 <http://dev.perl.org/licenses/>
-
