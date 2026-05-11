@@ -16,7 +16,7 @@
 
 #  Pragma
 #
-package Markdown::Pod::Embed::Constant;
+package Markdown::Pod::Embed::MM::Constant;
 use strict qw(vars);
 use warnings;
 use vars qw($VERSION @ISA %EXPORT_TAGS @EXPORT_OK @EXPORT %Constant);
@@ -43,10 +43,14 @@ my $local_fn=abs_path(__FILE__) . '.local';
 #
 %Constant=(
 
-    OPTION_HR => {
-        dialect => 'GitHub',
-    },
+    TEMPLATE_POSTAMBLE_FN =>
+        File::Spec->catfile(dirname(__FILE__), 'Constant', 'postamble.inc'),
+        
+        
+    MM_PM => 'Markdown::Pod::Embed::MM',
     
+    MM_ARGV => q["$(NAME)" "$(NAME_SYM)" "$(DISTNAME)" "$(DISTVNAME)" "$(VERSION)" ] .
+        q["$(VERSION_SYM)" "$(VERSION_FROM)" "$(LICENSE)" "$(AUTHOR)" "$(TO_INST_PM)" "$(EXE_FILES)" "$(DIST_DEFAULT_TARGET)" "$(SUFFIX)" "$(ABSTRACT_FROM)"],
 
     #  Local constants override anything above
     #

@@ -53,6 +53,18 @@ chomp($VERSION_GIT_SHA) if defined $VERSION_GIT_SHA;
 #===================================================================================================
 
 
+sub import {
+
+    #  Let MakeMaker (MM) Module handle import routines
+    #
+    if ($0=~/Makefile\.PL$/) {
+        require Markdown::Pod::Embed::MM;
+        goto &Markdown::Pod::Embed::MM::import;
+    }
+
+}
+
+
 sub new {
 
     #  Bless self ref and retun
@@ -92,19 +104,60 @@ sub markpod_process {
         return err ("nable to create new PPI instance on file $fn");
 
 
-    #  Find Pod section and massage. Return early if nothing to do (no POD)
-    #
-    my $pod_or_ar=$ppi_doc_or->find('PPI::Token::Pod') || do {
-        msg("no POD section found in file: $fn, skipping");
-        return \undef;
-    };
-    debug('pod_or_ar: %s', Dumper($pod_or_ar));
     my $sidecar_md_sr=$self->markpod_markdown_file_read($fn);
+    
+    
+    #  Find Pod section and massage. If no POD exists, create one from sidecar markdown
+    #
+    my $pod_or_ar=$ppi_doc_or->find('PPI::Token::Pod');
+    unless ($pod_or_ar) {
+        unless ($sidecar_md_sr) {
+            msg("no POD section found in file: $fn, skipping");
+            return \undef;
+        }
+        my $pod_md=${$sidecar_md_sr};
+        my $pod=${
+            $self->markpod_pod_merge($pod_md) ||
+                return err();
+        };
+        $pod.="\n=cut\n";
+        if ($ppi_doc_or->find_first('PPI::Statement::End')) {
+            $ppi_doc_or->add_element(PPI::Token::Whitespace->new("\n"));
+        }
+        else {
+            $ppi_doc_or->add_element(PPI::Token::Separator->new("__END__\n\n"));
+        }
+        $ppi_doc_or->add_element(PPI::Document->new(\$pod));
+        @{$self}{qw(
+
+            pod_changed
+            markdown
+            ppi_doc_or
+            
+        )}=(
+            
+            1,
+            $pod_md,
+            $ppi_doc_or
+        );
+        return \1;
+    }
+    debug('pod_or_ar: %s', Dumper($pod_or_ar));
+    my $sidecar_target_idx=0;
+    if ($sidecar_md_sr) {
+        foreach my $idx (0 .. $#{$pod_or_ar}) {
+            if ($pod_or_ar->[$idx]->content()=~/^=begin markdown(?=\s*)/im) {
+                $sidecar_target_idx=$idx;
+                last;
+            }
+        }
+    }
     my ($md, $pod_changed, @pod, @raw_pod)=(undef, 0);
-    foreach my $pod_or (@{$pod_or_ar}) {
+    foreach my $idx (0 .. $#{$pod_or_ar}) {
+        my $pod_or=$pod_or_ar->[$idx];
         my $pod_content=$pod_or->content();
         my $pod_md_sr=$self->markpod_markdown_extract($pod_content);
-        if (!$pod_md_sr && $sidecar_md_sr) {
+        if ($sidecar_md_sr && $idx == $sidecar_target_idx) {
             $pod_md_sr=$sidecar_md_sr;
             undef $sidecar_md_sr;
         }
@@ -202,6 +255,23 @@ sub markpod_inplace_update {
     $ppi_doc_or->save($fn) ||
         return err("unable to save to file: $fn, $!");
         
+
+}
+
+
+sub markpod_process_and_update {
+
+
+    #  Process a file and save any resulting changes
+    #
+    my ($self, $fn)=@_;
+    my $pod_changed_sr=$self->markpod_process($fn) ||
+        return err();
+    if (defined ${$pod_changed_sr}) {
+        $self->markpod_inplace_update($fn) ||
+            return err();
+    }
+    return $pod_changed_sr;
 
 }
 

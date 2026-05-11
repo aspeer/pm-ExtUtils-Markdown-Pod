@@ -113,8 +113,13 @@ sub main {    #no subsort
         
         #  Process
         #
-        my $pod_changed=${$self->markpod_process($fn) ||
-            return err()};
+        my $pod_changed_sr=$self->markpod_process($fn) ||
+            return err();
+        unless (defined ${$pod_changed_sr}) {
+            debug("markpod_process skipped file: $fn");
+            next;
+        }
+        my $pod_changed=${$pod_changed_sr};
         debug("markpod_process completed with $pod_changed lines updated");
 
 
