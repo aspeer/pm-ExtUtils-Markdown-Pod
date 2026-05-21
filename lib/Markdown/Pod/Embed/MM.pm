@@ -15,7 +15,7 @@ package Markdown::Pod::Embed::MM;
 #  Compiler Pragma
 #
 use strict qw(vars);
-use vars   qw($VERSION @ISA);
+use vars   qw($VERSION @ISA $IMPORTED);
 use warnings;
 no warnings qw(uninitialized);
 sub BEGIN {local $^W=0}
@@ -32,6 +32,8 @@ use Markdown::Pod::Embed::Constant;
 use IO::File;
 #use File::Spec;
 use Data::Dumper;
+use Digest::MD5 qw(md5_hex);
+use File::Copy;
 #use Carp;
 #use Cwd;
 
@@ -98,6 +100,7 @@ sub import {
     #  Get params, bless self ref and remember import tags spec'd for later
     #  re-use
     #
+    return if $IMPORTED++;
     my $self=bless \my %self, shift();
     my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@_};
     $import_tag{':all'}++ unless keys %import_tag;
@@ -154,6 +157,16 @@ sub postamble {
     #  Get original and append
     #
     my $postamble=$self->{'postamble'}(@_);
+    $postamble=~s{
+        \n\#\s+Targets\ that\ invoke\ the\ module\s*\n
+        .*?
+        \n(?:doc\s+::\s+readme\s*\n)?
+    }{\n}xms;
+    $postamble=~s{
+        \n\#\s+Call\ module\ methods\ for\ explicit\ targets\s*\n
+        .*?
+        \n(?:doc\s+::\s+readme\s*\n)?
+    }{\n}xms;
     $postamble.=join('', <$patch_fh>);
 
 
@@ -215,6 +228,8 @@ sub const_config {
 
 }
 
+# Makefile Targets from here down
+# 
 
 sub doc {
 
@@ -242,7 +257,7 @@ sub doc {
     #
     my @manifest_md_fn=grep {/\.md$/} keys %{$manifest_hr};
     @manifest_md_fn=grep    {!$ignore_fn{$_}} @manifest_md_fn;
-    msg('found following Markdown files for conversion %s', Dumper(\@manifest_md_fn))
+    msg('processing markdown targets: %s', Dumper(\@manifest_md_fn))
         if @manifest_md_fn;
 
 
@@ -258,20 +273,26 @@ sub doc {
         #
         (my $target_fn=$fn)=~s/\.md$//;
 
-        msg("considering target $target_fn from file: $fn");
+        msg("processing target: $target_fn");
         if ($target_fn=~/\.pm$/ || $target_fn=~/\.pl$/ || $exe_files{$target_fn}) {
             unless (-f $target_fn) {
-                msg("skipped missing target $target_fn");
+                msg("skipped missing target: $target_fn");
                 next;
             }
-            msg("converting $fn to POD");
             my $markpod_or=Markdown::Pod::Embed->new();
-            #$markpod_or->markpod_process_and_update($target_fn) ||
-            #    return err();
-            msg("converted to POD: $target_fn");
+            my $pod_changed=$markpod_or->markpod_process_and_update($target_fn);
+            if (!defined $pod_changed) {
+                msg("skipped pod update: $target_fn");
+            }
+            elsif ($pod_changed) {
+                msg("updated pod: $target_fn");
+            }
+            else {
+                msg("no changes to pod: $target_fn");
+            }
         }
         else {
-            msg("skipped $target_fn");
+            msg("skipped unsupported target: $target_fn");
 
         }
 
@@ -280,9 +301,151 @@ sub doc {
 
     #  Done
     #
-    return \undef;
+    return undef;
 
 }
+
+
+sub readme {
+
+
+    #  Build README text from README.md, VERSION_FROM sidecar or embedded markdown
+    #
+    my ($self, $param_hr)=(shift(), arg(@_));
+    require Markdown::Pod::Embed;
+
+
+    #  Get manifest for any file additions we make
+    #
+    require ExtUtils::Manifest;
+    my $manifest_hr=ExtUtils::Manifest::maniread();
+    my @manifest_add;
+    my $version_from_fn=$param_hr->{'VERSION_FROM'};
+    my $version_from_md_fn=sprintf('%s.md', $version_from_fn);
+    my $readme_md_fn='README.md';
+    my $readme_fn='README';
+    my $markpod_or=Markdown::Pod::Embed->new();
+    my $md;
+
+
+    #  Resolve source precedence for README markdown
+    #
+    if (-f $readme_md_fn && !-l $readme_md_fn) {
+        msg('using README.md as markdown source');
+        $md=_slurp($readme_md_fn);
+    }
+    elsif (-e $version_from_md_fn) {
+        _ensure_readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
+            return err();
+        $md=$markpod_or->markpod_markdown_source($version_from_fn);
+        msg('using markdown sidecar source: %s', $version_from_md_fn);
+    }
+    else {
+        $md=$markpod_or->markpod_markdown_source($version_from_fn);
+        unless (defined $md && length $md) {
+            msg('skipped README update: no markdown source for %s', $version_from_fn);
+            return undef;
+        }
+        _touch($version_from_md_fn);
+        push @manifest_add, $version_from_md_fn unless exists $manifest_hr->{$version_from_md_fn};
+        _ensure_readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
+            return err();
+        msg('using embedded markdown source: %s', $version_from_fn);
+    }
+
+
+    #  No markdown means nothing to render
+    #
+    unless (defined $md && length $md) {
+        msg('skipped README update: resolved markdown source is empty');
+        _manifest_add_if_missing(\@manifest_add) if @manifest_add;
+        return undef;
+    }
+
+
+    #  Convert markdown to text
+    #
+    my $text=$markpod_or->markpod_markdown_text($md);
+    msg("rendered README text");
+    
+
+    #  Update README only when changed
+    #
+    my $existing_readme=-f $readme_fn ? ${_slurp($readme_fn)} : '';
+    if (md5_hex($existing_readme) ne md5_hex($text)) {
+        $markpod_or->outfile($text, $readme_fn) ||
+            return err();
+        msg('updated README');
+    }
+    else {
+        msg('no changes, README not updated');
+    }
+
+    _manifest_add_if_missing(\@manifest_add) if @manifest_add;
+
+}
+
+
+sub _ensure_readme_symlink {
+
+    my ($link_fn, $target_fn, $manifest_add_ar, $manifest_hr)=@_;
+    if (-e $link_fn || -l $link_fn) {
+        if (-l $link_fn) {
+            my $current_target=readlink($link_fn);
+            return 1 if defined $current_target && $current_target eq $target_fn;
+            unlink($link_fn) ||
+                return err("unable to remove stale symlink $link_fn, $!");
+        }
+        else {
+            return err("$link_fn exists and is not a symlink");
+        }
+    }
+    symlink($target_fn, $link_fn) ||
+        return err("link of $target_fn to $link_fn failed, $!");
+    push @{$manifest_add_ar}, $link_fn unless exists $manifest_hr->{$link_fn};
+    msg('created symlink: %s -> %s', $link_fn, $target_fn);
+    return 1;
+
+}
+
+
+sub _manifest_add_if_missing {
+
+    my ($file_ar)=@_;
+    return undef unless @{$file_ar};
+    require ExtUtils::Manifest;
+    my %add=map { $_ => '' } @{$file_ar};
+    ExtUtils::Manifest::maniadd(\%add);
+    return 1;
+
+}
+
+
+sub _slurp {
+
+    my ($fn)=@_;
+    my $fh=IO::File->new($fn, 'r') ||
+        return err("unable to open file $fn, $!");
+    local $/=undef;
+    my $text=<$fh>;
+    $fh->close();
+    return $text || '';
+
+}
+
+
+sub _touch {
+
+    my ($fn)=@_;
+    return 1 if -e $fn;
+    my $fh=IO::File->new($fn, 'w') ||
+        return err("unable to create file $fn, $!");
+    $fh->close();
+    return 1;
+
+}
+
+
 1;
 
 

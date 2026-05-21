@@ -9,12 +9,18 @@ markpod - convert markdown formatted pod to pure pod
 
 # EXAMPLES
 
-\#  Convert markdown in file to POD. Backup will be taken
-`markpod.pl bin/foo.pl --inplace`
+```bash
+#  Convert markdown in file to POD. Backup will be taken
+markpod.pl bin/foo.pl --inplace
+```
 
 
-\#  Extract markdown from file and output to standalone file
-`markpod.pl bin/foo.pl --extract --outfile=bin/foo.pl.md`
+
+
+```bash
+#  Extract markdown from file and output to standalone file
+markpod.pl bin/foo.pl --extract --outfile=bin/foo.pl.md
+```
 
 
 # DESCRIPTION
@@ -52,28 +58,30 @@ pod documentation (e.g. perldoc etc.)
 Create a pod section in the perl code using the markdown formatter "begin"
 convention, e.g.
 
-```
+```markdown
  =pod
  =begin markdown 
 
  # POD Heading
- Some **Bold** Test
+ Some **Bold** Text
  [Perl Link](http://perl.org)
  Some `code` in this section
 
  =end markdown 
  =cut 
 ```
-  
+
 Once markpod is run it would be converted to the following.
 
+```pod
  =head1 POD Heading
 
- Some B\<Bold\> Test
+ Some B\<Bold\> Text
  L\<Perl Link|http://perl.org\>
  Some C\<code\> in this section
 
  =cut
+```
 
 # AUTHOR
 

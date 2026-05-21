@@ -1,6 +1,14 @@
 use 5.006;
 use strict;
 use ExtUtils::MakeMaker;
+BEGIN {
+    use lib './lib';
+    eval {
+        require Markdown::Pod::Embed;
+        Markdown::Pod::Embed->import;
+        1;
+    }
+};
 my $mm_ver = $ExtUtils::MakeMaker::VERSION;
 if ($mm_ver =~ /_/) { # dev version
     $mm_ver = eval $mm_ver;

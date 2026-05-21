@@ -79,7 +79,8 @@ $VERSION='0.013';
 
 #  Run main
 #
-exit(${&main(&getopt(\@ARGV)) || die err ()} || 0);    # || 0 stops warnings
+&main(&getopt(\@ARGV));
+exit 0;
 
 
 #===================================================================================================
@@ -113,13 +114,11 @@ sub main {    #no subsort
         
         #  Process
         #
-        my $pod_changed_sr=$self->markpod_process($fn) ||
-            return err();
-        unless (defined ${$pod_changed_sr}) {
+        my $pod_changed=$self->markpod_process($fn);
+        unless (defined $pod_changed) {
             debug("markpod_process skipped file: $fn");
             next;
         }
-        my $pod_changed=${$pod_changed_sr};
         debug("markpod_process completed with $pod_changed lines updated");
 
 
@@ -130,13 +129,13 @@ sub main {    #no subsort
         
             #  Just want markdown
             #
-            my $markdown_sr=$self->markdown() ||
-                return err() ;
+            my $markdown=$self->markdown();
+            defined $markdown || return err();
                 
 
             #  Send to STDOUT or selected output file
             #
-            &outfile($markdown_sr, $output_fn);
+            &outfile($markdown, $output_fn);
             
         }
         elsif ($opt_hr->{'extract_pod'}) {
@@ -144,13 +143,13 @@ sub main {    #no subsort
 
             #  Just want POD
             #
-            my $pod_sr=$self->pod() ||
-                return err();
+            my $pod=$self->pod();
+            defined $pod || return err();
         
                 
             #  Send to STDOUT or selected output file
             #
-            &outfile($pod_sr, $output_fn);
+            &outfile($pod, $output_fn);
             
         }
         elsif ($opt_hr->{'inplace'}) {
@@ -170,14 +169,14 @@ sub main {    #no subsort
 
             #  Guess we want the whole resulting file output somewhere
             #
-            my $ppi_doc_or=$self->ppi_doc_or($fn) ||
+            my $ppi_doc_or=$self->ppi_doc_or() ||
                 return err();
             my $output=$ppi_doc_or->serialize();
             
             
             #  Send to STDOUT or selected output file
             #
-            &outfile(\$output, $output_fn);
+            &outfile($output, $output_fn);
             
         }
     }
@@ -185,7 +184,7 @@ sub main {    #no subsort
 
     #  Done
     #
-    return \undef;
+    return undef;
 
 
 }
@@ -196,7 +195,7 @@ sub outfile {
 
     #  Save output to a file or send to STDOUT
     #
-    my ($output_sr, $fn)=@_;
+    my ($output, $fn)=@_;
 
 
     #  Send to STDOUT or selected output file
@@ -205,7 +204,7 @@ sub outfile {
         IO::File->new($fn, O_CREAT|O_TRUNC|O_WRONLY) ||
             return err("unable to open output file $fn, $!");
         } : *STDOUT;
-    print $fh ${$output_sr};
+    print $fh $output;
     
 
 }    
@@ -260,22 +259,27 @@ markpod - convert markdown formatted pod to pure pod
 
 # SYNOPSIS
 
-`markpod filename <filename> <filename>`
+`markpod.pl filename <filename> <filename>`
 
 # EXAMPLES
 
-```
+```bash
 #  Convert markdown in file to POD. Backup will be taken
-markpod bin/foo.pl --inplace
+markpod.pl bin/foo.pl --inplace
+```
 
+
+
+
+```bash
 #  Extract markdown from file and output to standalone file
-markpod bin/foo.pl --extract --outfile=bin/foo.pl.md
+markpod.pl bin/foo.pl --extract --outfile=bin/foo.pl.md
 ```
 
 
 # DESCRIPTION
 
-markpod scans a file for markdown formatted pod and - if found - converts it to pure
+markpod.pl scans a file for markdown formatted pod and - if found - converts it to pure
 pod, and then appends it to the pod section of the file. It allows the user to write perl
 documentation in markdown format within a pod block - and then have it
 converted to "normal" pod for use with all standard utilities that expect
@@ -308,28 +312,30 @@ pod documentation (e.g. perldoc etc.)
 Create a pod section in the perl code using the markdown formatter "begin"
 convention, e.g.
 
-```
+```markdown
  =pod
  =begin markdown 
 
  # POD Heading
- Some **Bold** Test
+ Some **Bold** Text
  [Perl Link](http://perl.org)
  Some `code` in this section
 
  =end markdown 
  =cut 
 ```
-  
+
 Once markpod is run it would be converted to the following.
 
+```pod
  =head1 POD Heading
 
- Some B\<Bold\> Test
+ Some B\<Bold\> Text
  L\<Perl Link|http://perl.org\>
  Some C\<code\> in this section
 
  =cut
+```
 
 # AUTHOR
 
@@ -348,6 +354,8 @@ Full license text is available at:
 
 <http://dev.perl.org/licenses/>
 
+
+
 =end markdown
 
 
@@ -358,23 +366,21 @@ markpod - convert markdown formatted pod to pure pod
 
 =head1 SYNOPSIS
 
-C<<< markpod filename <filename> <filename> >>>
+C<<< markpod.pl filename <filename> <filename> >>>
 
 
 =head1 EXAMPLES
 
-#  Convert markdown in file to POD. Backup will be taken
 
-C<markpod bin/foo.pl --inplace>
+ #  Convert markdown in file to POD. Backup will be taken
+ markpod.pl bin/foo.pl --inplace
 
-#  Extract markdown from file and output to standalone file
-
-C<markpod bin/foo.pl --extract --outfile=bin/foo.pl.md>
-
+ #  Extract markdown from file and output to standalone file
+ markpod.pl bin/foo.pl --extract --outfile=bin/foo.pl.md
 
 =head1 DESCRIPTION
 
-markpod scans a file for markdown formatted pod and - if found - converts it to pure
+markpod.pl scans a file for markdown formatted pod and - if found - converts it to pure
 pod, and then appends it to the pod section of the file. It allows the user to write perl
 documentation in markdown format within a pod block - and then have it
 converted to "normal" pod for use with all standard utilities that expect
@@ -414,7 +420,7 @@ convention, e.g.
   =begin markdown 
  
   # POD Heading
-  Some **Bold** Test
+  Some **Bold** Text
   [Perl Link](http://perl.org)
   Some `code` in this section
  
@@ -422,14 +428,14 @@ convention, e.g.
   =cut 
 Once markpod is run it would be converted to the following.
 
- =head1 POD Heading
 
- Some B<Bold> Test
- L<Perl Link|L<http://perl.org\>>
- Some C<code> in this section
-
- =cut
-
+  =head1 POD Heading
+ 
+  Some B\<Bold\> Text
+  L\<Perl Link|http://perl.org\>
+  Some C\<code\> in this section
+ 
+  =cut
 
 =head1 AUTHOR
 

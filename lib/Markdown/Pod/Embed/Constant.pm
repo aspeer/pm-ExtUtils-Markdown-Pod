@@ -39,6 +39,47 @@ use Cwd qw(abs_path);
 my $local_fn=abs_path(__FILE__) . '.local';
 
 
+#  Find file in path
+#
+sub bin_find {
+
+
+    #  Find a binary file
+    #
+    my @bin_fn=@_;
+    my $bin_fn;
+
+
+    #  Find the bin file/files if given array ref. If not supplied as array ref
+    #  convert.
+    #
+    my @dir=grep {-d $_} split(/:|;/, $ENV{'PATH'});
+    my %dir=map  {$_ => 1} @dir;
+    DIR: foreach my $dir (@dir) {
+        next unless delete $dir{$dir};
+        next unless -d $dir;
+        foreach my $bin (@bin_fn) {
+            if (-f File::Spec->catfile($dir, $bin)) {
+                $bin_fn=File::Spec->catfile($dir, $bin);
+                last DIR;
+            }
+        }
+    }
+
+
+    #  Normalize fn
+    #
+    $bin_fn=File::Spec->canonpath($bin_fn) if $bin_fn;
+
+
+    #  Return
+    #
+    return $bin_fn || '';
+
+}
+
+
+
 #  Hash of constants
 #
 %Constant=(
@@ -46,7 +87,18 @@ my $local_fn=abs_path(__FILE__) . '.local';
     OPTION_HR => {
         dialect => 'GitHub',
     },
-    
+
+
+    PANDOC_EXE => &bin_find(qw(pandoc pandoc.exe)),
+
+    PANDOC_CMD_MD2TEXT_CR => sub {
+        return [
+            shift(),                # PANDOC_EXE
+            '-fmarkdown_github',    # from markdown (github dialect)
+            '-tplain',              # to plaintext
+            shift(),                # File name
+        ]
+    },
 
     #  Local constants override anything above
     #

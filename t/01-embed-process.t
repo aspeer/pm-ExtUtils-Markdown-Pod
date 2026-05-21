@@ -39,8 +39,8 @@ Sample::Plain - plain pod only
 PLAIN
     spew($fn, $orig);
     my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
-    my $changed_sr=$markpod_or->markpod_process($fn);
-    is(${$changed_sr}, 0, 'plain POD without markdown reports no changes');
+    my $changed=$markpod_or->markpod_process($fn);
+    is($changed, 0, 'plain POD without markdown reports no changes');
     $markpod_or->markpod_inplace_update($fn);
     is(slurp($fn), $orig, 'plain POD without markdown is preserved');
 }
@@ -63,8 +63,8 @@ Sample::Embedded - embedded markdown
 =cut
 EMBEDDED
     my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
-    my $changed_sr=$markpod_or->markpod_process($fn);
-    ok(${$changed_sr} > 0, 'embedded markdown reports changes');
+    my $changed=$markpod_or->markpod_process($fn);
+    ok($changed > 0, 'embedded markdown reports changes');
     $markpod_or->markpod_inplace_update($fn);
     my $updated=slurp($fn);
     like($updated, qr/^=begin markdown\b/m, 'embedded markdown block retained');
@@ -91,8 +91,8 @@ SIDECAR_PM
 Sample::Sidecar - sidecar markdown
 SIDECAR_MD
     my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
-    my $changed_sr=$markpod_or->markpod_process($fn);
-    ok(${$changed_sr} > 0, 'sidecar markdown reports changes');
+    my $changed=$markpod_or->markpod_process($fn);
+    ok($changed > 0, 'sidecar markdown reports changes');
     $markpod_or->markpod_inplace_update($fn);
     my $updated=slurp($fn);
     like($updated, qr/^=begin markdown\b/m, 'sidecar markdown inserted into POD');
@@ -112,8 +112,8 @@ NO_POD_PM
 Sample::NoPod - sidecar markdown
 NO_POD_MD
     my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
-    my $changed_sr=$markpod_or->markpod_process($fn);
-    is(${$changed_sr}, 1, 'sidecar markdown creates a new POD section');
+    my $changed=$markpod_or->markpod_process($fn);
+    is($changed, 1, 'sidecar markdown creates a new POD section');
     $markpod_or->markpod_inplace_update($fn);
     my $updated=slurp($fn);
     like($updated, qr/^__END__$/m, 'new POD section adds __END__ marker');
@@ -144,8 +144,8 @@ SIDE_EMBED_PM
 Sample::SidecarOverEmbedded - sidecar markdown
 SIDE_EMBED_MD
     my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
-    my $changed_sr=$markpod_or->markpod_process($fn);
-    ok(${$changed_sr} > 0, 'sidecar overrides embedded markdown');
+    my $changed=$markpod_or->markpod_process($fn);
+    ok($changed > 0, 'sidecar overrides embedded markdown');
     $markpod_or->markpod_inplace_update($fn);
     my $updated=slurp($fn);
     like($updated, qr/Sample::SidecarOverEmbedded - sidecar markdown/, 'sidecar markdown content embedded');
@@ -177,8 +177,8 @@ Converted section
 MULTI
     spew($fn, $orig);
     my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
-    my $changed_sr=$markpod_or->markpod_process($fn);
-    ok(${$changed_sr} > 0, 'mixed POD reports changes');
+    my $changed=$markpod_or->markpod_process($fn);
+    ok($changed > 0, 'mixed POD reports changes');
     $markpod_or->markpod_inplace_update($fn);
     my $updated=slurp($fn);
     like($updated, qr/Sample::Multi - plain section/, 'plain POD block preserved');
