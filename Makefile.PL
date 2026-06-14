@@ -1,6 +1,14 @@
 use 5.006;
 use strict;
 use ExtUtils::MakeMaker;
+use File::Copy qw(copy);
+use File::Spec;
+use Tie::File;
+use Cwd qw(abs_path);
+
+
+#  Self load
+#
 BEGIN {
     use lib './lib';
     eval {
@@ -9,6 +17,10 @@ BEGIN {
         1;
     }
 };
+
+
+#  Main Makefile.PL section
+#
 my $mm_ver = $ExtUtils::MakeMaker::VERSION;
 if ($mm_ver =~ /_/) { # dev version
     $mm_ver = eval $mm_ver;
@@ -65,16 +77,24 @@ while (my($mm_ver_test, $ar)=each %MM_Compat) {
 }
 WriteMakefile(%WriteMakefile);
 
-package MY;
-use File::Copy qw(copy);
-use File::Spec;
-use Tie::File;
-use Cwd qw(abs_path);
 
-sub post_initialize {
+#  Custom extensions
+#
+sub MY::postamble {
+
+    #  Stub, add custom postamble here if required
+    #
+    my $mm_or=shift();
+    CORE::print "postamble $mm_or\n";
+    return $mm_or->MY::SUPER::postamble;
+}
+
+
+sub MY::post_initialize {
 
     #  Add license file, other support files here
     #
+    CORE::print "MY::post_initialize\n";
     my $mm_or=shift();
     $mm_or->{'PM'}{'LICENSE'}='$(INST_LIBDIR)/$(BASEEXT)/LICENSE' if -e 'LICENSE';
     
@@ -100,7 +120,7 @@ sub post_initialize {
         tie my @lines, 'Tie::File', $mm_or->{'VERSION_FROM'} . '.sha' || die "error on Tie::File, $!";
         $lines[0]=$git_version;
     }
-    $mm_or->SUPER::post_initialize;
+    $mm_or->MY::SUPER::post_initialize;
 
 }
 
@@ -109,6 +129,7 @@ sub MM::init_main {
 
     #  Strip .pl, .sh extension from script files before installing
     #
+    CORE::print "init_main\n";
     my $mm_or=shift();
     my @fn;
     foreach my $fn (@{$mm_or->{'EXE_FILES'}}) {
@@ -119,6 +140,6 @@ sub MM::init_main {
         push @fn, $fn_new;
     }
     $mm_or->{'EXE_FILES'}=\@fn;
-    $mm_or->SUPER::init_main();
+    $mm_or->MY::SUPER::init_main();
 
 }

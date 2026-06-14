@@ -28,7 +28,6 @@ use Markdown::Pod::Embed::Constant;
 
 #  Base external modules
 #
-use IO::File;
 use File::Copy;
 
 
@@ -216,10 +215,7 @@ sub markpod_markdown_file_read {
     my ($self, $fn)=@_;
     my $md_fn="${fn}.md";
     return undef unless -f $md_fn;
-    my $fh=IO::File->new($md_fn, 'r') ||
-        return err("unable to open markdown file $md_fn, $!");
-    local $/=undef;
-    my $md=<$fh>;
+    my $md=slurp($md_fn);
     chomp($md);
     unless (length $md) {
         debug("markdown sidecar file is empty, falling back to embedded markdown: $md_fn");
@@ -400,44 +396,12 @@ sub outfile {
 
     #  Send to STDOUT or selected output file
     #
-    my $fh=$fn ? do {
-        IO::File->new($fn, O_CREAT|O_TRUNC|O_WRONLY) ||
-            return err("unable to open output file $fn, $!");
-        } : *STDOUT;
-    print $fh $output;
+    return blurp($fn, $output) if $fn;
+    print STDOUT $output;
+    return 1;
     
 
 }    
-
-
-
-sub fn_slurp {
-
-    #  Slurp in file content
-    #
-    my ($self, $fn)=@_;
-    my $fh=IO::File->new($fn, O_RDONLY) ||
-        return err("unable to open file $fn, $!");
-    my $text;
-    local $/=undef;
-    $text=<$fh>;
-    $fh->close();
-    return $text || '';
-
-}
-
-
-sub fn_blurp {
-
-    #  Save to file
-    #
-    my ($self, $fn, $text)=@_;
-    my $fh=IO::File->new($fn, O_WRONLY | O_CREAT | O_TRUNC) ||
-        return err("unable to open $fn for write, $!");
-    print $fh $text;
-    $fh->close();
-
-}
 
 
 
@@ -751,7 +715,6 @@ the same terms as the Perl 5 programming language system itself.
 Full license text is available at:
 
 <http://dev.perl.org/licenses/>
-
 
 =end markdown
 

@@ -13,6 +13,9 @@ cpanfile
 LICENSE                                  
 t/00-load.t
 t/01-embed-process.t
+t/02-markdown-source.t
+t/03-update-behavior.t
+t/04-mm-readme.t
 INSTALL.md
 INSTALL
 lib/Markdown/Pod/Embed.pm.md                    

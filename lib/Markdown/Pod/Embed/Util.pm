@@ -26,6 +26,7 @@ use warnings;
 use FindBin qw($RealBin $Script);
 FindBin::again();
 use Data::Dumper;
+use IO::File;
 $Data::Dumper::Indent=1;
 $Data::Dumper::Terse=1;
 
@@ -33,7 +34,7 @@ $Data::Dumper::Terse=1;
 #  Export functions
 #
 use base 'Exporter';
-@EXPORT=qw(err msg arg debug debug_enable Dumper);
+@EXPORT=qw(err msg debug debug_enable Dumper slurp blurp touch);
 
 
 #  Version information in a format suitable for CPAN etc. Must be
@@ -112,7 +113,7 @@ sub fmt {
     chomp($message);
     my $caller=(caller(2))[3] || 'main';
     $caller=~s/^_?!(_)//;
-    my $format='@<<<<<<<<<<<<<<<<<<<<<< @<';
+    my $format='@<<<<<<<<<<<<<<<<<<<<<<<<<< @<';
     local $^A='';
     formline $format, "[${caller}]", '';
     $message=$^A . $message; $^A=undef;
@@ -126,5 +127,43 @@ sub msg {
     #  Print message
     #
     return (CORE::print &fmt(@_), $/) unless $QUIET;
+
+}
+
+
+sub slurp {
+
+    #  Slurp in file content
+    #
+    my ($fn)=@_;
+    my $fh=IO::File->new($fn, 'r') ||
+        return err("unable to open file $fn, $!");
+    local $/=undef;
+    my $text=<$fh>;
+    $fh->close();
+    return $text || '';
+
+}
+
+
+sub blurp {
+
+    #  Save file content
+    #
+    my ($fn, $text)=@_;
+    my $fh=IO::File->new($fn, 'w') ||
+        return err("unable to open $fn for write, $!");
+    print $fh $text;
+    $fh->close();
+    return 1;
+
+}
+
+
+sub touch {
+
+    my ($fn)=@_;
+    return 1 if -e $fn;
+    return blurp($fn, '');
 
 }

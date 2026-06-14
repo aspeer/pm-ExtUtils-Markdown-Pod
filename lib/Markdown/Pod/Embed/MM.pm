@@ -25,15 +25,17 @@ sub BEGIN {local $^W=0}
 #
 use Markdown::Pod::Embed::MM::Constant;
 use Markdown::Pod::Embed::Constant;
+use Markdown::Pod::Embed::Util;
 #use ExtUtils::Git::Util;
 #use ExtUtils::Git::Constant;
 #use Software::License;
 #use Software::LicenseUtils;
-use IO::File;
 #use File::Spec;
-use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
-use File::Copy;
+#use File::Copy;
+use Config;
+use File::Spec;
+
 #use Carp;
 #use Cwd;
 
@@ -47,7 +49,8 @@ $VERSION='1.188';
 
 #  use ExtUtils::MakeMaker as our parent class.
 #
-use base 'ExtUtils::MakeMaker';
+#use base 'ExtUtils::MakeMaker';
+use base 'ExtUtils::MM';
 
 
 #  All done, init finished
@@ -57,25 +60,20 @@ use base 'ExtUtils::MakeMaker';
 
 #===================================================================================================
 
-sub err {
 
-    use Carp qw(croak confess);
-    confess sprintf(shift(), @_);
-    
-}
+sub import {
 
-
-sub msg {
-
-    CORE::print sprintf(shift(), @_)."\n";
+    $MY::->{__PACKAGE__}{'class'}=shift();
+    $MY::->{__PACKAGE__}{'import_tag'}=\@_ if @_;
+    $MY::->{__PACKAGE__}{'INC'}=\@INC;
+    1;
     
 }
 
 
 sub arg {
 
-    #  Get args, does nothing but intercept distname for messages, convert to param
-    #  hash
+    #  Convert MakeMaker target args to a named parameter hash.
     #
     my (%param, @argv);
     (@param{qw(NAME NAME_SYM DISTNAME DISTVNAME VERSION VERSION_SYM VERSION_FROM LICENSE AUTHOR TO_INST_PM EXE_FILES DIST_DEFAULT_TARGET SUFFIX ABSTRACT_FROM)}, @argv)=@_;
@@ -87,60 +85,19 @@ sub arg {
 }
 
 
-sub import {
 
-
-    #  Manage activation of const_config and dist_ci targets via import tags. Import tags are
-    #
-    #  use ExtUtils::Git::MM qw(const_config) to just replace the macros section of the Makefile
-    #  .. qw(dist_ci) to replace standard MakeMaker targets with our own
-    #  .. qw(:all) to get both of the above, usual usage
-    #
-
-    #  Get params, bless self ref and remember import tags spec'd for later
-    #  re-use
-    #
-    return if $IMPORTED++;
-    my $self=bless \my %self, shift();
-    my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@_};
-    $import_tag{':all'}++ unless keys %import_tag;
-
-
-    #  Store for later use in MY::makefile section
-    #
-    $self{'ISA'}=\@INC;
-
-
-    #  sections to replace
-    #
-    my @section=qw(
-        const_config
-        distdir
-        depend
-        postamble
-        special_targets
-    );    #dist_ci
-    @section=qw(
-        const_config
-        postamble
-    );
-    {   no warnings 'redefine';
-        foreach my $section (grep {$import_tag{$_} || $import_tag{':all'}} @section) {
-            $self{$section}=UNIVERSAL::can('MY', $section);
-            *{"MY::${section}"}=sub {&{$section}($self, @_)};
-        }
-    }
-
-
-}
-
-
-sub postamble {
+sub ExtUtils::MY::postamble {
 
 
     #  Get self ref
     #
-    my $self=shift();
+    my $mm_or=shift();
+    msg("MM::postamble $mm_or");
+
+
+    #  Get original postamble ready for append
+    #
+    my $postamble=$mm_or->SUPER::postamble();
 
 
     #  Get patch dir and file name
@@ -148,31 +105,9 @@ sub postamble {
     my $patch_fn=$TEMPLATE_POSTAMBLE_FN;
 
 
-    #  Open it
+    #  Open it and slurp in
     #
-    my $patch_fh=IO::File->new($patch_fn, O_RDONLY) ||
-        return err("unable to open $patch_fn, $!");
-
-
-    #  Get original and append
-    #
-    my $postamble=$self->{'postamble'}(@_);
-    $postamble=~s{
-        \n\#\s+Targets\ that\ invoke\ the\ module\s*\n
-        .*?
-        \n(?:doc\s+::\s+readme\s*\n)?
-    }{\n}xms;
-    $postamble=~s{
-        \n\#\s+Call\ module\ methods\ for\ explicit\ targets\s*\n
-        .*?
-        \n(?:doc\s+::\s+readme\s*\n)?
-    }{\n}xms;
-    $postamble.=join('', <$patch_fh>);
-
-
-    #  Close
-    #
-    $patch_fh->close();
+    $postamble.=slurp($patch_fn);
 
 
     #  All done, return result
@@ -182,12 +117,13 @@ sub postamble {
 }
 
 
-sub const_config {
+sub MM::const_config {
 
 
     #  Get self ref
     #
-    my ($self, $mm)=(shift(), @_);
+    my $mm_or=shift();
+    msg("MM::const_config $mm_or: %s", Dumper($MY::->{__PACKAGE__}));
 
 
     #  Import Constants into macros
@@ -196,41 +132,56 @@ sub const_config {
 
         #  Update macros with our config
         #
-        $mm->{'macro'}{$key}=$value;
+        $mm_or->{'macro'}{$key}=$value;
 
     }
 
 
-    #  Adjust PERLRUN to include @INC and this module
+    #  Setup PERLRUN to recreate any added libraries, start by pulling @INC as of import time
+    #
+    my @INC=@{$MY::->{__PACKAGE__}{'INC'}};
+    
+
+    #  Discard duplicates
+    #
+    my %perlrun_inc;
+    @INC=grep {!$perlrun_inc{File::Spec->canonpath($_)}++} @INC;
+    
+    
+    #  Discard any compiled or environmental library paths
+    #
+    foreach my $lib (map {$Config{$_}} qw(privlib archlib sitelib sitearch vendorlib vendorarch)) { 
+        @INC=grep {!/^\Q${lib}\E/} @INC;
+    }
+    foreach my $lib (split (/\:/, $ENV{'PERL5LIB'})) { 
+        @INC=grep {!/^\Q${lib}\E/} @INC;
+    }
+    
+    
+    #  Now construct final PERLRUN string
     #
     my $perlrun;
-    my %perlrun_inc;
-    my $perlrun_inc=join(' ', map {"-I$_"} grep {!$perlrun_inc{$_}++} @{$self->{'ISA'}});
-    my $class=ref($self);
-    if (my $include_tags_ar=$self->{'include_tags'}) {
-        $perlrun=sprintf("\$(PERL) $perlrun_inc -M${class}=%s", join(',', @{$include_tags_ar}));
+    my $perlrun_inc=join(' ', map {"-I$_"} grep {!$perlrun_inc{$_}++} @INC);
+    my $class=$MY::->{'__PACKAGE__'}{'class'};
+    if (my $import_tag_ar=$MY::->{__PACKAGE__}{'import_tag'}) {
+        $perlrun=sprintf("\$(PERL) $perlrun_inc -M${class}=%s", join(',', @{$import_tag_ar}));
     }
     else {
         $perlrun="\$(PERL) $perlrun_inc -M${class}";
     }
-    $mm->{'PERLRUN'}=$perlrun;
+    $mm_or->{'PERLRUN'}=$perlrun;
 
-
-    #  Keep copy of DIST_DEFAULT
+    
+    #  Macros all set, return whatever master const_config does
     #
-    #$mm->{'macro'}{'DIST_DEFAULT_TARGET'}=$mm->{'DIST_DEFAULT'};
-
-
-    #  Return whatever our parent does
-    #
-    return $self->{'const_config'}(@_);
+    return $mm_or->SUPER::const_config();
 
 
 }
 
+
 # Makefile Targets from here down
 # 
-
 sub doc {
 
 
@@ -332,10 +283,10 @@ sub readme {
     #
     if (-f $readme_md_fn && !-l $readme_md_fn) {
         msg('using README.md as markdown source');
-        $md=_slurp($readme_md_fn);
+        $md=slurp($readme_md_fn);
     }
     elsif (-e $version_from_md_fn) {
-        _ensure_readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
+        readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
             return err();
         $md=$markpod_or->markpod_markdown_source($version_from_fn);
         msg('using markdown sidecar source: %s', $version_from_md_fn);
@@ -346,9 +297,9 @@ sub readme {
             msg('skipped README update: no markdown source for %s', $version_from_fn);
             return undef;
         }
-        _touch($version_from_md_fn);
+        touch($version_from_md_fn);
         push @manifest_add, $version_from_md_fn unless exists $manifest_hr->{$version_from_md_fn};
-        _ensure_readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
+        readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
             return err();
         msg('using embedded markdown source: %s', $version_from_fn);
     }
@@ -358,7 +309,7 @@ sub readme {
     #
     unless (defined $md && length $md) {
         msg('skipped README update: resolved markdown source is empty');
-        _manifest_add_if_missing(\@manifest_add) if @manifest_add;
+        manifest_add(\@manifest_add) if @manifest_add;
         return undef;
     }
 
@@ -371,7 +322,7 @@ sub readme {
 
     #  Update README only when changed
     #
-    my $existing_readme=-f $readme_fn ? ${_slurp($readme_fn)} : '';
+    my $existing_readme=-f $readme_fn ? slurp($readme_fn) : '';
     if (md5_hex($existing_readme) ne md5_hex($text)) {
         $markpod_or->outfile($text, $readme_fn) ||
             return err();
@@ -381,12 +332,12 @@ sub readme {
         msg('no changes, README not updated');
     }
 
-    _manifest_add_if_missing(\@manifest_add) if @manifest_add;
+    manifest_add(\@manifest_add) if @manifest_add;
 
 }
 
 
-sub _ensure_readme_symlink {
+sub readme_symlink {
 
     my ($link_fn, $target_fn, $manifest_add_ar, $manifest_hr)=@_;
     if (-e $link_fn || -l $link_fn) {
@@ -409,38 +360,13 @@ sub _ensure_readme_symlink {
 }
 
 
-sub _manifest_add_if_missing {
+sub manifest_add {
 
     my ($file_ar)=@_;
     return undef unless @{$file_ar};
     require ExtUtils::Manifest;
     my %add=map { $_ => '' } @{$file_ar};
     ExtUtils::Manifest::maniadd(\%add);
-    return 1;
-
-}
-
-
-sub _slurp {
-
-    my ($fn)=@_;
-    my $fh=IO::File->new($fn, 'r') ||
-        return err("unable to open file $fn, $!");
-    local $/=undef;
-    my $text=<$fh>;
-    $fh->close();
-    return $text || '';
-
-}
-
-
-sub _touch {
-
-    my ($fn)=@_;
-    return 1 if -e $fn;
-    my $fh=IO::File->new($fn, 'w') ||
-        return err("unable to create file $fn, $!");
-    $fh->close();
     return 1;
 
 }
