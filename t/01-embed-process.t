@@ -117,6 +117,7 @@ NO_POD_MD
     $markpod_or->markpod_inplace_update($fn);
     my $updated=slurp($fn);
     like($updated, qr/^__END__$/m, 'new POD section adds __END__ marker');
+    like($updated, qr/__END__\n\n=begin markdown\n\n# NAME/, 'new POD section has normalized markdown spacing');
     like($updated, qr/^=begin markdown\b/m, 'sidecar markdown block embedded into file');
     like($updated, qr/^=head1 NAME\b/m, 'generated POD added for new section');
 }

@@ -104,6 +104,7 @@ sub markpod_process {
 
 
     my $sidecar_md=$self->markpod_markdown_file_read($fn);
+    my $end_or=$ppi_doc_or->find_first('PPI::Statement::End');
     
     
     #  Find Pod section and massage. If no POD exists, create one from sidecar markdown
@@ -114,15 +115,13 @@ sub markpod_process {
             msg("skipped file with no pod or markdown source: $fn");
             return undef;
         }
+        $self->markpod_end_normalize($end_or) if $end_or;
         my $pod_md=$sidecar_md;
         my $pod=
             $self->markpod_pod_merge($pod_md) ||
                 return err();
         $pod.="\n=cut\n";
-        if ($ppi_doc_or->find_first('PPI::Statement::End')) {
-            $ppi_doc_or->add_element(PPI::Token::Whitespace->new("\n"));
-        }
-        else {
+        unless ($end_or) {
             $ppi_doc_or->add_element(PPI::Token::Separator->new("__END__\n\n"));
         }
         $ppi_doc_or->add_element(PPI::Document->new(\$pod));
@@ -141,6 +140,10 @@ sub markpod_process {
         return 1;
     }
     debug('pod_or_ar: %s', Dumper($pod_or_ar));
+    my $end_changed=0;
+    if ($end_or && (defined $sidecar_md || grep { $_->content()=~/^=begin markdown(?=\s*)/im } @{$pod_or_ar})) {
+        $end_changed=$self->markpod_end_normalize($end_or);
+    }
     my $sidecar_target_idx=0;
     if (defined $sidecar_md) {
         foreach my $idx (0 .. $#{$pod_or_ar}) {
@@ -150,7 +153,7 @@ sub markpod_process {
             }
         }
     }
-    my ($md, $pod_changed, @pod, @raw_pod)=(undef, 0);
+    my ($md, $pod_changed, @pod, @raw_pod)=(undef, $end_changed);
     foreach my $idx (0 .. $#{$pod_or_ar}) {
         my $pod_or=$pod_or_ar->[$idx];
         my $pod_content=$pod_or->content();
@@ -210,6 +213,41 @@ sub markpod_process {
 }
 
 
+sub markpod_end_normalize {
+
+    my ($self, $end_or)=@_;
+    my $content=$end_or->content();
+    my @children=$end_or->children();
+    return 0 unless @children;
+
+    my $pod_idx;
+    foreach my $idx (0 .. $#children) {
+        if ($children[$idx]->isa('PPI::Token::Pod')) {
+            $pod_idx=$idx;
+            last;
+        }
+    }
+
+    my $last_gap_idx=defined $pod_idx ? $pod_idx - 1 : $#children;
+    foreach my $idx (0 .. $#children) {
+        if ($idx == 0) {
+            $children[$idx]->set_content("__END__");
+        }
+        elsif ($idx == 1 && $idx <= $last_gap_idx) {
+            $children[$idx]->set_content("\n\n");
+        }
+        elsif ($idx <= $last_gap_idx) {
+            $children[$idx]->set_content('');
+        }
+    }
+    if (!defined $pod_idx && @children == 1) {
+        $end_or->add_element(PPI::Token::Whitespace->new("\n\n"));
+    }
+    return $content ne $end_or->content();
+
+}
+
+
 sub markpod_markdown_file_read {
 
     my ($self, $fn)=@_;
@@ -217,6 +255,7 @@ sub markpod_markdown_file_read {
     return undef unless -f $md_fn;
     my $md=slurp($md_fn);
     chomp($md);
+    $md=$self->markpod_markdown_normalize($md);
     unless (length $md) {
         debug("markdown sidecar file is empty, falling back to embedded markdown: $md_fn");
         return undef;
@@ -314,7 +353,17 @@ sub markpod_markdown_extract {
         return undef;
     }
     chomp($md);
+    $md=$self->markpod_markdown_normalize($md);
     debug('extracted markdown %s', Dumper(\$md));
+    return $md;
+
+}
+
+
+sub markpod_markdown_normalize {
+
+    my ($self, $md)=@_;
+    $md=~s/\A(?:[ \t]*\r?\n)+//;
     return $md;
 
 }
@@ -332,6 +381,7 @@ sub markpod_pod_merge {
     $pod=join(
         "\n",
         '=begin markdown',
+        '',
         $md,
         '',
         '=end markdown',
