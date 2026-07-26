@@ -9,6 +9,8 @@ lib/Markdown/Pod/Embed.pm
 lib/Markdown/Pod/Embed.pm.sha
 lib/Markdown/Pod/Embed/Util.pm
 lib/Markdown/Pod/Embed/Constant.pm
+lib/Markdown/Pod/Embed/MM/Constant/postamble.inc
+lib/Markdown/Pod/Embed/MM/Constant.pm
 cpanfile
 LICENSE                                  
 t/00-load.t
