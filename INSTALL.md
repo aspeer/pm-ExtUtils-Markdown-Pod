@@ -3,8 +3,8 @@
 The latest version of this software is always available from Github
 
 ```
-git clone https://github.com/aspeer/pl-markpod
-cd pl-markpod
+git clone https://github.com/aspeer/pm-Markdown-Pod-Embed
+cd pm-Markdown-Pod-Embed
 ```
 
 If on a modern system:
@@ -24,4 +24,4 @@ make test
 make install
 ```
 
-If installing manually dependecies will have to installed individually.
+If installing manually, dependencies will have to be installed individually.

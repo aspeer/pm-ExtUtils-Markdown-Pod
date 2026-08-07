@@ -4,6 +4,21 @@ Markdown::Pod::Embed - keep Perl documentation in Markdown and ship it as POD
 
 # SYNOPSIS
 
+With `ExtUtils::MakeMaker`:
+
+```bash
+perl -MMarkdown::Pod::Embed Makefile.PL
+make doc
+```
+
+From the command line:
+
+```bash
+markpod.pl --inplace lib/My/Module.pm
+markpod.pl --extract-markdown lib/My/Module.pm > lib/My/Module.pm.md
+markpod.pl --extract-pod lib/My/Module.pm
+```
+
 From a Perl module or script:
 
 ```perl
@@ -17,28 +32,8 @@ my $markpod = Markdown::Pod::Embed->new({
 my $changed = $markpod->markpod_process_and_update('lib/My/Module.pm');
 ```
 
-From the command line:
-
-```bash
-markpod.pl --inplace lib/My/Module.pm
-markpod.pl --extract-markdown lib/My/Module.pm > lib/My/Module.pm.md
-markpod.pl --extract-pod lib/My/Module.pm
-```
-
-With `ExtUtils::MakeMaker`, load the module from `Makefile.PL`:
-
-```perl
-BEGIN {
-    use lib './lib';
-    eval {
-        require Markdown::Pod::Embed;
-        Markdown::Pod::Embed->import;
-        1;
-    };
-}
-```
-
-The import hook adds `doc` and `readme` targets to the generated Makefile.
+The MakeMaker import hook adds `doc` and `readme` targets to the generated
+Makefile.
 
 # DESCRIPTION
 

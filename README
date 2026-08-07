@@ -5,6 +5,17 @@ as POD
 
 SYNOPSIS
 
+With ExtUtils::MakeMaker:
+
+    perl -MMarkdown::Pod::Embed Makefile.PL
+    make doc
+
+From the command line:
+
+    markpod.pl --inplace lib/My/Module.pm
+    markpod.pl --extract-markdown lib/My/Module.pm > lib/My/Module.pm.md
+    markpod.pl --extract-pod lib/My/Module.pm
+
 From a Perl module or script:
 
     use Markdown::Pod::Embed;
@@ -16,24 +27,8 @@ From a Perl module or script:
 
     my $changed = $markpod->markpod_process_and_update('lib/My/Module.pm');
 
-From the command line:
-
-    markpod.pl --inplace lib/My/Module.pm
-    markpod.pl --extract-markdown lib/My/Module.pm > lib/My/Module.pm.md
-    markpod.pl --extract-pod lib/My/Module.pm
-
-With ExtUtils::MakeMaker, load the module from Makefile.PL:
-
-    BEGIN {
-        use lib './lib';
-        eval {
-            require Markdown::Pod::Embed;
-            Markdown::Pod::Embed->import;
-            1;
-        };
-    }
-
-The import hook adds doc and readme targets to the generated Makefile.
+The MakeMaker import hook adds doc and readme targets to the generated
+Makefile.
 
 DESCRIPTION
 
