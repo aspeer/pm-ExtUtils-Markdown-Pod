@@ -1,62 +1,96 @@
 
 # NAME
 
-markpod - convert markdown formatted pod to pure pod
+markpod - merge Markdown documentation into Perl POD
 
 # SYNOPSIS
 
-`markpod.pl filename <filename> <filename>`
+```bash
+markpod.pl --inplace lib/My/Module.pm
+markpod.pl --extract-markdown lib/My/Module.pm
+markpod.pl --extract-pod lib/My/Module.pm
+```
 
 # EXAMPLES
 
 ```bash
-#  Convert markdown in file to POD. Backup will be taken
-markpod.pl bin/foo.pl --inplace
+# Convert sidecar or embedded Markdown to POD and update the file.
+markpod.pl --inplace bin/foo.pl
 ```
-
-
-
 
 ```bash
-#  Extract markdown from file and output to standalone file
-markpod.pl bin/foo.pl --extract --outfile=bin/foo.pl.md
+# Extract Markdown to a sidecar file.
+markpod.pl bin/foo.pl --extract-markdown --outfile=bin/foo.pl.md
 ```
 
+```bash
+# Convert and write the transformed source to STDOUT.
+markpod.pl lib/My/Module.pm
+```
 
 # DESCRIPTION
 
-markpod.pl scans a file for markdown formatted pod and - if found - converts it to pure
-pod, and then appends it to the pod section of the file. It allows the user to write perl
-documentation in markdown format within a pod block - and then have it
-converted to "normal" pod for use with all standard utilities that expect
-pod documentation (e.g. perldoc etc.)
+`markpod.pl` is the command-line interface for `Markdown::Pod::Embed`. It
+processes Perl modules and scripts, finds Markdown documentation, converts that
+Markdown to POD, and writes a merged documentation block back into the source.
+
+Markdown can come from a same-path sidecar file such as `lib/My/Module.pm.md`
+or from an embedded POD block beginning with `=begin markdown`.
+
+The generated output keeps the Markdown source and appends generated POD, so the
+file remains editable in Markdown while still working with POD tools such as
+`perldoc`, `pod2man`, and CPAN metadata extractors.
+
+Status messages are written to STDERR. Converted source, extracted Markdown, and
+extracted POD are written to STDOUT unless `--outfile` is supplied.
 
 # OPTIONS
 
-**--file|fn|f** input file to process
+**--file|--fn|--f|--in** input file to process. Positional filenames are also
+accepted.
 
 **--inplace** update the file in place
 
-**--outfile** file to write to. If omitted will overwrite input file (i.e. inplace update)
+**--outfile|--output|--o** file to write extracted Markdown, extracted POD, or
+transformed source to. Without this option, output goes to STDOUT.
 
-**--dialect** which Markdown dialect to use from Markdent module. Options are Standard, GitHub (default) and Theory 
+**--dialect** Markdown dialect passed to `Markdown::Pod`. The default is
+`GitHub`.
 
-**--extract** just extract the Markdown from the input file and don't update POD. Print to STDOUT or file (using --output)
+**--extract-markdown|--extract|--md|--markdown** extract Markdown from the input
+file without updating POD.
 
-**--extract_pod** just extract the POD from the input file. Print to STDOUT or file (using --output)
+**--extract-pod|--pod** extract generated POD from the input file.
 
-**--nobackup** don't backup input file when doing inplace update
+**--nobackup** do not create a `.bak` file when doing an in-place update.
 
-**--help** show help synopsis
+**--quiet** suppress status output.
 
-**--man** show man page
+**--verbose** include additional status messages, such as skipped MakeMaker
+targets and backup behavior.
 
-**--version** show version information
+**--debug** enable developer diagnostics.
+
+**--help** show help synopsis.
+
+**--man** show the full manual page.
+
+**--version** show version information.
+
+# STATUS OUTPUT
+
+Normal status output is intentionally short:
+
+```text
+markpod: lib/My/Module.pm.md -> lib/My/Module.pm: starting merge
+markpod: lib/My/Module.pm: finished, updated pod
+```
+
+Use `--quiet` to suppress status lines.
 
 # USAGE
 
-Create a pod section in the perl code using the markdown formatter "begin"
-convention, e.g.
+Create a Markdown section in POD using the `=begin markdown` convention:
 
 ```markdown
  =pod
@@ -71,9 +105,19 @@ convention, e.g.
  =cut 
 ```
 
-Once markpod is run it would be converted to the following.
+After `markpod.pl --inplace` runs, the block is rewritten to retain the Markdown
+and append generated POD:
 
 ```pod
+ =begin markdown
+
+ # POD Heading
+ Some **Bold** Text
+ [Perl Link](http://perl.org)
+ Some `code` in this section
+
+ =end markdown
+
  =head1 POD Heading
 
  Some B\<Bold\> Text
@@ -89,9 +133,9 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE and COPYRIGHT
 
-This file is part of markpod.
+This file is part of Markdown::Pod::Embed.
 
-This software is copyright (c) 2024 by Andrew Speer <andrew.speer@isolutions.com.au>.
+This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
@@ -99,4 +143,3 @@ the same terms as the Perl 5 programming language system itself.
 Full license text is available at:
 
 <http://dev.perl.org/licenses/>
-

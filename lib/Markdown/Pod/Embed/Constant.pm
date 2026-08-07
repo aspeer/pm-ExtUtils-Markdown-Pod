@@ -1,7 +1,7 @@
 #
-#  This file is part of markpod.
+#  This file is part of Markdown::Pod::Embed.
 #
-#  This software is copyright (c) 2024 by Andrew Speer <andrew.speer@isolutions.com.au>.
+#  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
 #  This is free software; you can redistribute it and/or modify it under
 #  the same terms as the Perl 5 programming language system itself.
@@ -30,7 +30,7 @@ use File::Basename qw(dirname);
 
 #  Version information
 #
-$VERSION='0.013';
+$VERSION='0.009';
 
 
 #  Get module file name and path, derive name of file to store local constants
@@ -117,3 +117,176 @@ foreach (keys %Constant) {${$_}=$Constant{$_}}
 @EXPORT_OK=@EXPORT;
 %EXPORT_TAGS=(all => [@EXPORT_OK]);
 $_=\%Constant;
+__END__
+
+=begin markdown
+
+# NAME
+
+Markdown::Pod::Embed::Constant - constants for Markdown::Pod::Embed
+
+# SYNOPSIS
+
+```perl
+use Markdown::Pod::Embed::Constant;
+
+my $default_dialect = $OPTION_HR->{dialect};
+my $pandoc          = $PANDOC_EXE;
+my $cmd             = $PANDOC_CMD_MD2TEXT_CR->($pandoc, '-');
+```
+
+# DESCRIPTION
+
+`Markdown::Pod::Embed::Constant` defines exported constants used by the core
+processor and command-line tool.
+
+The constants are stored in `%Constant`, exported as package variables, and can
+be overridden by local configuration files loaded at compile time.
+
+# CONSTANTS
+
+`$OPTION_HR`
+: Default processor options. The current default Markdown dialect is `GitHub`.
+
+`$PANDOC_EXE`
+: Path to `pandoc` discovered from `PATH`, or an empty string when `pandoc` is
+  not available.
+
+`$PANDOC_CMD_MD2TEXT_CR`
+: Code reference that builds the `pandoc` command used to render Markdown to
+  plain text for README generation.
+
+# FUNCTIONS
+
+## bin_find
+
+```perl
+my $path = Markdown::Pod::Embed::Constant::bin_find(qw(pandoc pandoc.exe));
+```
+
+Searches `PATH` for the first executable-like file matching one of the supplied
+names and returns a canonical path. If no candidate is found, it returns an
+empty string.
+
+# LOCAL OVERRIDES
+
+Local constants can be overridden by files loaded from:
+
+```text
+lib/Markdown/Pod/Embed/Constant.pm.local
+~/.Markdown::Pod::Embed::Constant.local
+```
+
+Those files are expected to return a hash reference suitable for merging into
+`%Constant`.
+
+# SEE ALSO
+
+`Markdown::Pod::Embed`
+
+# AUTHOR
+
+Andrew Speer <andrew.speer@isolutions.com.au>
+
+# LICENSE AND COPYRIGHT
+
+This file is part of Markdown::Pod::Embed.
+
+This software is copyright (c) 2026 by Andrew Speer
+<andrew.speer@isolutions.com.au>.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+Full license text is available at:
+
+<http://dev.perl.org/licenses/>
+
+=end markdown
+
+
+=head1 NAME
+
+Markdown::Pod::Embed::Constant - constants for Markdown::Pod::Embed
+
+
+=head1 SYNOPSIS
+
+
+ use Markdown::Pod::Embed::Constant;
+ 
+ my $default_dialect = $OPTION_HR->{dialect};
+ my $pandoc          = $PANDOC_EXE;
+ my $cmd             = $PANDOC_CMD_MD2TEXT_CR->($pandoc, '-');
+
+=head1 DESCRIPTION
+
+C<Markdown::Pod::Embed::Constant> defines exported constants used by the core
+processor and command-line tool.
+
+The constants are stored in C<%Constant>, exported as package variables, and can
+be overridden by local configuration files loaded at compile time.
+
+
+=head1 CONSTANTS
+
+C<$OPTION_HR>
+: Default processor options. The current default Markdown dialect is C<GitHub>.
+
+C<$PANDOC_EXE>
+: Path to C<pandoc> discovered from C<PATH>, or an empty string when C<pandoc> is
+  not available.
+
+C<$PANDOC_CMD_MD2TEXT_CR>
+: Code reference that builds the C<pandoc> command used to render Markdown to
+  plain text for README generation.
+
+
+=head1 FUNCTIONS
+
+
+=head2 bin_find
+
+
+ my $path = Markdown::Pod::Embed::Constant::bin_find(qw(pandoc pandoc.exe));
+Searches C<PATH> for the first executable-like file matching one of the supplied
+names and returns a canonical path. If no candidate is found, it returns an
+empty string.
+
+
+=head1 LOCAL OVERRIDES
+
+Local constants can be overridden by files loaded from:
+
+
+ lib/Markdown/Pod/Embed/Constant.pm.local
+ ~/.Markdown::Pod::Embed::Constant.local
+Those files are expected to return a hash reference suitable for merging into
+C<%Constant>.
+
+
+=head1 SEE ALSO
+
+C<Markdown::Pod::Embed>
+
+
+=head1 AUTHOR
+
+Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
+
+
+=head1 LICENSE AND COPYRIGHT
+
+This file is part of Markdown::Pod::Embed.
+
+This software is copyright (c) 2026 by Andrew Speer
+L<mailto:andrew.speer@isolutions.com.au>.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+Full license text is available at:
+
+L<http://dev.perl.org/licenses/>
+
+=cut

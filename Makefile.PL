@@ -5,6 +5,7 @@ use File::Copy qw(copy);
 use File::Spec;
 use Tie::File;
 use Cwd qw(abs_path);
+use version;
 
 
 #  Self load
@@ -36,9 +37,43 @@ my %WriteMakefile=(
     AUTHOR              => 'Andrew Speer <andrew.speer@isolutions.com.au>',
     MIN_PERL_VERSION	=> '5.006',
     PREREQ_PM           =>  {
-        'Test::Simple'  =>  0.44,
-		'Markdown::Pod'	        =>  0,
-		'PPI'			=>  0,
+        'Config'                =>  0,
+        'Cwd'                   =>  0,
+        'Carp'                  =>  0,
+        'Data::Dumper'          =>  0,
+        'Digest::MD5'           =>  0,
+        'ExtUtils::MM'          =>  0,
+        'ExtUtils::Manifest'    =>  0,
+        'Exporter'              =>  0,
+        'Fcntl'                 =>  0,
+        'File::Basename'        =>  0,
+        'File::Copy'            =>  0,
+        'File::Spec'            =>  0,
+        'FindBin'               =>  0,
+        'Getopt::Long'          =>  0,
+        'IO::File'              =>  0,
+        'IPC::Run3'             =>  0,
+        'Markdown::Pod'	        =>  0,
+        'PPI'			=>  0,
+        'Pod::Usage'            =>  0,
+        'base'                  =>  0,
+        'constant'              =>  0,
+        'strict'                =>  0,
+        'vars'                  =>  0,
+        'warnings'              =>  0,
+    },
+    CONFIGURE_REQUIRES  =>  {
+        'ExtUtils::MakeMaker'   =>  0,
+        'File::Copy'            =>  0,
+        'File::Spec'            =>  0,
+        'Tie::File'             =>  0,
+        'Cwd'                   =>  0,
+        'version'               =>  0,
+    },
+    TEST_REQUIRES       =>  {
+        'File::Path'            =>  0,
+        'File::Temp'            =>  0,
+        'Test::More'            =>  0,
     },
     META_MERGE => { 
         'meta-spec'     => {
@@ -86,7 +121,9 @@ sub MY::postamble {
     #
     my $mm_or=shift();
     my $postamble; eval {ExtUtils::Git->import(); $postamble=&MY::postamble($mm_or)};
-    return $postamble.$mm_or->MY::SUPER::postamble;
+    my $super_postamble=$mm_or->MY::SUPER::postamble;
+    return $super_postamble if defined $postamble && index($postamble, $super_postamble) >= 0;
+    return ($postamble || '') . $super_postamble;
 
 }
 

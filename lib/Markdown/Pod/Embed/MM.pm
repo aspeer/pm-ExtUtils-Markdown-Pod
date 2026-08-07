@@ -1,4 +1,5 @@
-#  This file is part of ExtUtils::Git.
+#
+#  This file is part of Markdown::Pod::Embed.
 #
 #  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
@@ -33,7 +34,7 @@ use File::Spec;
 #  Version information in a formate suitable for CPAN etc. Must be
 #  all on one line
 #
-$VERSION='1.188';
+$VERSION='0.009';
 
 
 #  use ExtUtils::MakeMaker as our parent class.
@@ -189,7 +190,7 @@ sub doc {
 
     #  Look for all Markdown files ignoring ones we created ourselves
     #
-    my @manifest_md_fn=sort grep {/\.md$/} keys %{$manifest_hr};
+    my @manifest_md_fn=sort grep {/\.md$/ && !m{^t/}} keys %{$manifest_hr};
     @manifest_md_fn=grep    {!$ignore_fn{$_}} @manifest_md_fn;
     #  Iterate
     #
@@ -356,58 +357,311 @@ sub manifest_add {
 
 __END__
 
+=begin markdown
 
+# NAME
 
-#  MakeMaker::MY replacement const_config section
-#
-sub depend {
+Markdown::Pod::Embed::MM - MakeMaker integration for Markdown::Pod::Embed
 
+# SYNOPSIS
 
-    #  Get self ref
-    #
-    my ($self, $mm)=(shift(), @_);
+In `Makefile.PL`:
 
-
-    #  Get original and modify
-    #
-    my $depend=$self->{'depend'}(@_);
-
-
-    #  If nothing generate default
-    #
-    if (!$depend && $mm->{'VERSION_FROM'}) {
-        $depend='Makefile : $(VERSION_FROM)';
-    }
-    return $depend;
-
+```perl
+BEGIN {
+    use lib './lib';
+    eval {
+        require Markdown::Pod::Embed;
+        Markdown::Pod::Embed->import;
+        1;
+    };
 }
+```
+
+Then run:
+
+```bash
+perl Makefile.PL
+make doc
+make readme
+```
+
+# DESCRIPTION
+
+`Markdown::Pod::Embed::MM` contains the `ExtUtils::MakeMaker` integration for
+`Markdown::Pod::Embed`. The core processor is deliberately kept in
+`Markdown::Pod::Embed`; this module handles the MakeMaker hook points, generated
+Makefile targets, and README generation policy.
+
+When `Markdown::Pod::Embed` is imported from `Makefile.PL`, import dispatch is
+handed to this module. The module records enough MakeMaker context to rebuild
+the command line used by the generated `doc` and `readme` targets.
+
+# MAKEFILE INTEGRATION
+
+The module adds a postamble fragment containing targets that invoke
+`Markdown::Pod::Embed::MM` from the generated Makefile.
+
+`doc`
+: Finds Markdown files listed in `MANIFEST`, derives each target by removing
+  the trailing `.md`, and merges supported sidecars into matching `.pm`, `.pl`,
+  or executable files. Markdown files under `t/` are ignored so test fixtures
+  are not rewritten by documentation builds.
+
+`readme`
+: Builds `README` from the best available Markdown source.
+
+The generated status output is concise and goes to STDERR:
+
+```text
+markpod: lib/My/Module.pm.md -> lib/My/Module.pm: starting merge
+markpod: lib/My/Module.pm.md -> lib/My/Module.pm: finished, updated pod
+```
+
+Unsupported or missing targets are reported only when verbose output has been
+enabled.
+
+# README SOURCE PRECEDENCE
+
+README generation uses this source order:
+
+1. A real `README.md` file, if present.
+2. The sidecar for `VERSION_FROM`, for example
+   `lib/Markdown/Pod/Embed.pm.md`.
+3. Embedded Markdown in the `VERSION_FROM` file.
+
+When the `VERSION_FROM` sidecar or embedded Markdown is used, the module creates
+`README.md` as a symlink to the sidecar source when possible and adds any new
+files to `MANIFEST`.
+
+The Markdown is rendered to plain text with `pandoc` via `IPC::Run3`.
+
+# FUNCTIONS
+
+## import
+
+Records the importing class, import tags, and current `@INC` so MakeMaker
+targets can re-invoke the module with the same local library paths.
+
+## arg
+
+Converts the positional arguments passed through the generated Makefile target
+into a named hash used by `doc` and `readme`.
+
+## doc
+
+Processes sidecar Markdown files from `MANIFEST` and updates supported Perl
+targets in place.
+
+## readme
+
+Renders the project README from Markdown according to the precedence described
+above.
+
+## readme_symlink
+
+Creates or refreshes the `README.md` symlink used when the README source is the
+`VERSION_FROM` sidecar.
+
+## manifest_add
+
+Adds generated support files to `MANIFEST`.
+
+# CAVEATS
+
+This module intentionally contains the MakeMaker-specific behavior and package
+hooking so the core processor does not need to know about MakeMaker internals.
+
+The implementation expects a traditional MakeMaker distribution layout with a
+usable `MANIFEST` file.
+
+# SEE ALSO
+
+`Markdown::Pod::Embed`, `ExtUtils::MakeMaker`, `ExtUtils::MM`,
+`ExtUtils::Manifest`
+
+# AUTHOR
+
+Andrew Speer <andrew.speer@isolutions.com.au>
+
+# LICENSE AND COPYRIGHT
+
+This file is part of Markdown::Pod::Embed.
+
+This software is copyright (c) 2026 by Andrew Speer
+<andrew.speer@isolutions.com.au>.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+Full license text is available at:
+
+<http://dev.perl.org/licenses/>
+
+=end markdown
 
 
-#  MakeMaker::MY update postamble section to include a "git_import" and other functions
-#
-sub distdir {
+=head1 NAME
+
+Markdown::Pod::Embed::MM - MakeMaker integration for Markdown::Pod::Embed
 
 
-    #  Get self ref
-    #
-    my $self=shift();
+=head1 SYNOPSIS
+
+In C<Makefile.PL>:
 
 
-    #  Get original and modify
-    #
-    my $distdir=$self->{'distdir'}(@_);
-    $distdir=~s/distmeta/distmeta git_distchanges/;
-    return $distdir;
+ BEGIN {
+     use lib './lib';
+     eval {
+         require Markdown::Pod::Embed;
+         Markdown::Pod::Embed->import;
+         1;
+     };
+ }
+Then run:
 
-}
+
+ perl Makefile.PL
+ make doc
+ make readme
+
+=head1 DESCRIPTION
+
+C<Markdown::Pod::Embed::MM> contains the C<ExtUtils::MakeMaker> integration for
+C<Markdown::Pod::Embed>. The core processor is deliberately kept in
+C<Markdown::Pod::Embed>; this module handles the MakeMaker hook points, generated
+Makefile targets, and README generation policy.
+
+When C<Markdown::Pod::Embed> is imported from C<Makefile.PL>, import dispatch is
+handed to this module. The module records enough MakeMaker context to rebuild
+the command line used by the generated C<doc> and C<readme> targets.
 
 
+=head1 MAKEFILE INTEGRATION
 
-sub special_targets {
+The module adds a postamble fragment containing targets that invoke
+C<Markdown::Pod::Embed::MM> from the generated Makefile.
 
-    my $self=shift();
-    my $special_targets=$self->{'special_targets'}(@_);
-    $special_targets=~s/\.PHONY:\s+(.*)/\.PHONY: $1 cpanfile/m;
-    return $special_targets;
+C<doc>
+: Finds Markdown files listed in C<MANIFEST>, derives each target by removing
+  the trailing C<.md>, and merges supported sidecars into matching C<.pm>, C<.pl>,
+  or executable files. Markdown files under C<t/> are ignored so test fixtures
+  are not rewritten by documentation builds.
 
-}
+C<readme>
+: Builds C<README> from the best available Markdown source.
+
+The generated status output is concise and goes to STDERR:
+
+
+ markpod: lib/My/Module.pm.md -> lib/My/Module.pm: starting merge
+ markpod: lib/My/Module.pm.md -> lib/My/Module.pm: finished, updated pod
+Unsupported or missing targets are reported only when verbose output has been
+enabled.
+
+
+=head1 README SOURCE PRECEDENCE
+
+README generation uses this source order:
+
+=over
+
+=item 1.
+
+A real C<README.md> file, if present.
+
+
+=item 2.
+
+The sidecar for C<VERSION_FROM>, for example
+   C<lib/Markdown/Pod/Embed.pm.md>.
+
+
+=item 3.
+
+Embedded Markdown in the C<VERSION_FROM> file.
+
+
+=back
+
+When the C<VERSION_FROM> sidecar or embedded Markdown is used, the module creates
+C<README.md> as a symlink to the sidecar source when possible and adds any new
+files to C<MANIFEST>.
+
+The Markdown is rendered to plain text with C<pandoc> via C<IPC::Run3>.
+
+
+=head1 FUNCTIONS
+
+
+=head2 import
+
+Records the importing class, import tags, and current C<@INC> so MakeMaker
+targets can re-invoke the module with the same local library paths.
+
+
+=head2 arg
+
+Converts the positional arguments passed through the generated Makefile target
+into a named hash used by C<doc> and C<readme>.
+
+
+=head2 doc
+
+Processes sidecar Markdown files from C<MANIFEST> and updates supported Perl
+targets in place.
+
+
+=head2 readme
+
+Renders the project README from Markdown according to the precedence described
+above.
+
+
+=head2 readme_symlink
+
+Creates or refreshes the C<README.md> symlink used when the README source is the
+C<VERSION_FROM> sidecar.
+
+
+=head2 manifest_add
+
+Adds generated support files to C<MANIFEST>.
+
+
+=head1 CAVEATS
+
+This module intentionally contains the MakeMaker-specific behavior and package
+hooking so the core processor does not need to know about MakeMaker internals.
+
+The implementation expects a traditional MakeMaker distribution layout with a
+usable C<MANIFEST> file.
+
+
+=head1 SEE ALSO
+
+C<Markdown::Pod::Embed>, C<ExtUtils::MakeMaker>, C<ExtUtils::MM>,
+C<ExtUtils::Manifest>
+
+
+=head1 AUTHOR
+
+Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
+
+
+=head1 LICENSE AND COPYRIGHT
+
+This file is part of Markdown::Pod::Embed.
+
+This software is copyright (c) 2026 by Andrew Speer
+L<mailto:andrew.speer@isolutions.com.au>.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+Full license text is available at:
+
+L<http://dev.perl.org/licenses/>
+
+=cut

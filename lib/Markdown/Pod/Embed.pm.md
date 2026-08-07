@@ -40,6 +40,10 @@ The module is intended for Perl developers who are comfortable with POD,
 Markdown, CPAN-style module layouts, and source filters that work at the file
 level rather than at runtime.
 
+The distribution uses this module for its own documentation. The adjacent
+Markdown sidecar files are the source of the embedded POD in the modules and
+script.
+
 # DESCRIPTION
 
 The module supports two documentation sources:
@@ -155,6 +159,9 @@ Side effects:
 1. Stores the processed `PPI::Document` internally for later save.
 2. Stores extracted or sidecar Markdown internally.
 3. Stores the raw generated POD internally.
+
+This method does not print normal status messages. The command-line and
+MakeMaker wrappers are responsible for user-facing progress output.
 
 ## markpod_inplace_update
 
@@ -275,6 +282,10 @@ individually.
 Sidecar processing is file-oriented and assumes a same-path `.md` companion
 file. There is no search path, manifest lookup, or alternate naming policy in
 the core module itself.
+
+The object stores processing results on itself. It is convenient for CLI and
+build-target use, but it should be treated as stateful rather than reusable
+across interleaved processing jobs.
 
 # SEE ALSO
 
