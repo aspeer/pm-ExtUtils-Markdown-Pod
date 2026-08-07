@@ -1,22 +1,22 @@
 #  Targets that invoke the module 
 #
-MM_TARGETS=
+MARKPOD_TARGETS=
 
 
 #  Call modules with different method
 #
-MM_PERL_PM_TARGET=$(PERLRUN) -M$(MM_PM) \
-		-e 'my $$method=(pop @ARGV) || $@; $(MM_PM)->$$method(@ARGV)' \
-		-- $(MM_ARGV) $(MAKECMDGOALS)
+MARKPOD_PERL_TARGET=$(PERL) -Ilib -I./lib -MMarkdown::Pod::Embed::MM \
+		-e 'my $$method=pop @ARGV; Markdown::Pod::Embed::MM->$$method(@ARGV)' \
+		-- "$(NAME)" "$(NAME_SYM)" "$(DISTNAME)" "$(DISTVNAME)" "$(VERSION)" "$(VERSION_SYM)" "$(VERSION_FROM)" "$(LICENSE)" "$(AUTHOR)" "$(TO_INST_PM)" "$(EXE_FILES)" "$(DIST_DEFAULT_TARGET)" "$(SUFFIX)" "$(ABSTRACT_FROM)" $(MAKECMDGOALS)
 
 
 #  Targets that can run without rebuiling Makefile
 #
-$(MM_TARGETS) ::
-	@$(MM_PERL_PM_TARGET)
+$(MARKPOD_TARGETS) ::
+	@$(MARKPOD_PERL_TARGET)
 
 doc :: readme
-	@$(MM_PERL_PM_TARGET)
+	@$(MARKPOD_PERL_TARGET)
 
 readme ::
-	@$(MM_PERL_PM_TARGET) readme
+	@$(MARKPOD_PERL_TARGET) readme
