@@ -2,6 +2,8 @@
 #
 MARKPOD_TARGETS=
 
+.PHONY: doc readme $(MARKPOD_TARGETS)
+
 
 #  Call modules with different method
 #
