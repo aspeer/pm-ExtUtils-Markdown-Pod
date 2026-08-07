@@ -40,7 +40,7 @@ use Markdown::Pod;
 #  Version information
 #
 $AUTHORITY='cpan:ASPEER';
-$VERSION='0.009';
+$VERSION='0.010';
 $VERSION_GIT_SHA=do { local (@ARGV, $/) = ($_=__FILE__.'.sha'); <> if -f $_ };
 chomp($VERSION_GIT_SHA) if defined $VERSION_GIT_SHA;
 
@@ -756,12 +756,11 @@ across interleaved processing jobs.
 
 Andrew Speer <andrew.speer@isolutions.com.au>
 
-# LICENSE AND COPYRIGHT
+# LICENSE and COPYRIGHT
 
-This file is part of markpod.
+This file is part of Markdown::Pod::Embed.
 
-This software is copyright (c) 2024 by Andrew Speer
-<andrew.speer@isolutions.com.au>.
+This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
@@ -769,6 +768,7 @@ the same terms as the Perl 5 programming language system itself.
 Full license text is available at:
 
 <http://dev.perl.org/licenses/>
+
 
 =end markdown
 

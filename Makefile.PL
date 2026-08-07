@@ -122,7 +122,7 @@ sub MY::postamble {
     my $mm_or=shift();
     my $postamble; eval {ExtUtils::Git->import(); $postamble=&MY::postamble($mm_or)};
     my $super_postamble=$mm_or->MY::SUPER::postamble;
-    return $super_postamble if defined $postamble && index($postamble, $super_postamble) >= 0;
+    return $postamble if defined $postamble && index($postamble, $super_postamble) >= 0;
     return ($postamble || '') . $super_postamble;
 
 }
