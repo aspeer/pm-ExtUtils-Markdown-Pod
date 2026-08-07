@@ -106,20 +106,21 @@ sub main {    #no subsort
 
         #  Sanity check on file name
         #
-        debug("processing file: $fn");
         unless (-f $fn) {
             return err ("file $fn not found");
         }
+        my $source_fn=-f "${fn}.md" ? "${fn}.md" : 'embedded markdown';
+        msg("markpod: %s -> %s: starting merge", $source_fn, $fn);
         
         
         #  Process
         #
         my $pod_changed=$self->markpod_process($fn);
         unless (defined $pod_changed) {
-            debug("markpod_process skipped file: $fn");
+            msg("markpod: %s: finished, skipped", $fn);
             next;
         }
-        debug("markpod_process completed with $pod_changed lines updated");
+        debug("markpod_process completed with $pod_changed changes");
 
 
         #  Do whatever opts tell us
@@ -163,6 +164,7 @@ sub main {    #no subsort
                 $self->markpod_inplace_update($fn) ||
                     return err();
             }
+            verbose("markpod: backup %s", $opt_hr->{'nobackup'} ? 'disabled' : 'written if updated');
             
         }
         else {
@@ -179,6 +181,7 @@ sub main {    #no subsort
             &outfile($output, $output_fn);
             
         }
+        msg("markpod: %s: finished, %s", $fn, $pod_changed ? 'updated pod' : 'no changes');
     }
 
 
@@ -227,15 +230,14 @@ sub getopt {
         } keys %{+OPTION_HR}
 
     );
-    debug('opt stage 1: %s', Dumper(\%opt));
-
-
     #  Now import command line options.
     #
     GetOptionsFromArray($opt_ar, \%opt, @{+OPTION_AR}, '' => \${opt {'stdin'}}, '<>' => sub {push @{$opt{'infile_ar'}}, shift() . ''}) ||
         pod2usage(2);
+    quiet_enable($opt{'quiet'}) if $opt{'quiet'};
+    verbose_enable($opt{'verbose'}) if $opt{'verbose'};
     debug_enable($opt{'debug'});
-    debug('opt stage 2: %s', Dumper(\%opt));
+    debug('options parsed');
     pod2usage(-verbose => 2) if $opt{'man'};
     
 

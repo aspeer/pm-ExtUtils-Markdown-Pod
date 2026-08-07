@@ -21,3 +21,7 @@ t/04-mm-readme.t
 INSTALL.md
 INSTALL
 lib/Markdown/Pod/Embed.pm.md                    
+lib/Markdown/Pod/Embed/MM.pm             
+t/data/embedded-sample.pl                
+t/data/sidecar-sample.pl                 
+t/data/sidecar-sample.pl.md              

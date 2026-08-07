@@ -17,7 +17,7 @@ package Markdown::Pod::Embed::Util;
 #  Pragma
 #
 use strict;
-use vars qw($VERSION $DEBUG $QUIET @EXPORT);
+use vars qw($VERSION $DEBUG $QUIET $VERBOSE @EXPORT);
 use warnings;
 
 
@@ -34,7 +34,7 @@ $Data::Dumper::Terse=1;
 #  Export functions
 #
 use base 'Exporter';
-@EXPORT=qw(err msg debug debug_enable Dumper slurp blurp touch);
+@EXPORT=qw(err msg verbose debug quiet_enable verbose_enable debug_enable Dumper slurp blurp touch);
 
 
 #  Version information in a format suitable for CPAN etc. Must be
@@ -61,8 +61,27 @@ sub quiet_enable {
 
     #  Turn on quiet flag
     #
-    $QUIET++;
+    $QUIET=shift() || 1;
     
+
+}
+
+
+sub verbose {
+
+    #  Print verbose message
+    #
+    return if $QUIET || !$VERBOSE;
+    return CORE::print STDERR &fmt(@_), $/;
+
+}
+
+
+sub verbose_enable {
+
+    #  Turn on verbose flag
+    #
+    $VERBOSE=shift() || 1;
 
 }
 
@@ -111,12 +130,6 @@ sub fmt {
     #
     my $message=sprintf(shift(), @_);
     chomp($message);
-    my $caller=(caller(2))[3] || 'main';
-    $caller=~s/^_?!(_)//;
-    my $format='@<<<<<<<<<<<<<<<<<<<<<<<<<< @<';
-    local $^A='';
-    formline $format, "[${caller}]", '';
-    $message=$^A . $message; $^A=undef;
     return $message;
 
 }
@@ -126,7 +139,7 @@ sub msg {
 
     #  Print message
     #
-    return (CORE::print &fmt(@_), $/) unless $QUIET;
+    return (CORE::print STDERR &fmt(@_), $/) unless $QUIET;
 
 }
 

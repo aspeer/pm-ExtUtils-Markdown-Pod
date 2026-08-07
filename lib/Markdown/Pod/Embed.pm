@@ -69,18 +69,12 @@ sub new {
     #  Bless self ref and retun
     #
     my ($class, $opt_hr)=@_;
-    debug("instantiating new $class object with supplied options %s", Dumper($opt_hr));
-
-
     #  Get default options and overrides
     #
     my %opt=(
         %{$OPTION_HR},
         $opt_hr ? %{$opt_hr} : ()
     );
-    debug('final option hash %s', Dumper(\%opt));
-
-
     #  Done
     #
     return bless({opt=>\%opt}, $class);
@@ -112,7 +106,6 @@ sub markpod_process {
     my $pod_or_ar=$ppi_doc_or->find('PPI::Token::Pod');
     unless ($pod_or_ar) {
         unless (defined $sidecar_md) {
-            msg("skipped file with no pod or markdown source: $fn");
             return undef;
         }
         $self->markpod_end_normalize($end_or) if $end_or;
@@ -139,7 +132,6 @@ sub markpod_process {
         );
         return 1;
     }
-    debug('pod_or_ar: %s', Dumper($pod_or_ar));
     my $end_changed=0;
     if ($end_or && (defined $sidecar_md || grep { $_->content()=~/^=begin markdown(?=\s*)/im } @{$pod_or_ar})) {
         $end_changed=$self->markpod_end_normalize($end_or);
@@ -354,7 +346,7 @@ sub markpod_markdown_extract {
     }
     chomp($md);
     $md=$self->markpod_markdown_normalize($md);
-    debug('extracted markdown %s', Dumper(\$md));
+    debug('extracted markdown: %d bytes', length($md));
     return $md;
 
 }
@@ -377,7 +369,7 @@ sub markpod_pod_merge {
     my $pod=$md2pod_or->markdown_to_pod(dialect => $self->{'opt'}{'dialect'}, markdown => $md);
     #  Make a note of raw POD for getter function
     $self->{'pod'}=$pod;
-    debug('created pod %s', Dumper(\$pod));
+    debug('created pod: %d bytes', length($pod));
     $pod=join(
         "\n",
         '=begin markdown',

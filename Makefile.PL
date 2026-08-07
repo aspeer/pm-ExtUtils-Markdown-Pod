@@ -85,8 +85,9 @@ sub MY::postamble {
     #  Stub, add custom postamble here if required
     #
     my $mm_or=shift();
-    CORE::print "postamble $mm_or\n";
-    return $mm_or->MY::SUPER::postamble;
+    my $postamble; eval {ExtUtils::Git->import(); $postamble=&MY::postamble($mm_or)};
+    return $postamble.$mm_or->MY::SUPER::postamble;
+
 }
 
 
@@ -94,7 +95,6 @@ sub MY::post_initialize {
 
     #  Add license file, other support files here
     #
-    CORE::print "MY::post_initialize\n";
     my $mm_or=shift();
     $mm_or->{'PM'}{'LICENSE'}='$(INST_LIBDIR)/$(BASEEXT)/LICENSE' if -e 'LICENSE';
     
@@ -129,7 +129,6 @@ sub MM::init_main {
 
     #  Strip .pl, .sh extension from script files before installing
     #
-    CORE::print "init_main\n";
     my $mm_or=shift();
     my @fn;
     foreach my $fn (@{$mm_or->{'EXE_FILES'}}) {

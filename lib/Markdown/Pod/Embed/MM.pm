@@ -26,20 +26,9 @@ sub BEGIN {local $^W=0}
 use Markdown::Pod::Embed::MM::Constant;
 use Markdown::Pod::Embed::Constant;
 use Markdown::Pod::Embed::Util;
-#use ExtUtils::Git::Util;
-#use ExtUtils::Git::Constant;
-#use Software::License;
-#use Software::LicenseUtils;
-#use File::Spec;
 use Digest::MD5 qw(md5_hex);
-#use File::Copy;
 use Config;
 use File::Spec;
-
-#use Carp;
-#use Cwd;
-
-#die Dumper(\%Markdown::Pod::Embed::MM::Constant::Constant);
 
 #  Version information in a formate suitable for CPAN etc. Must be
 #  all on one line
@@ -92,9 +81,6 @@ sub ExtUtils::MY::postamble {
     #  Get self ref
     #
     my $mm_or=shift();
-    msg("MM::postamble $mm_or");
-
-
     #  Get original postamble ready for append
     #
     my $postamble=$mm_or->SUPER::postamble();
@@ -123,9 +109,6 @@ sub MM::const_config {
     #  Get self ref
     #
     my $mm_or=shift();
-    msg("MM::const_config $mm_or: %s", Dumper($MY::->{__PACKAGE__}));
-
-
     #  Import Constants into macros
     #
     while (my ($key, $value)=each %{sprintf('%s::Constant::Constant', __PACKAGE__)}) {
@@ -206,13 +189,8 @@ sub doc {
 
     #  Look for all Markdown files ignoring ones we created ourselves
     #
-    my @manifest_md_fn=grep {/\.md$/} keys %{$manifest_hr};
+    my @manifest_md_fn=sort grep {/\.md$/} keys %{$manifest_hr};
     @manifest_md_fn=grep    {!$ignore_fn{$_}} @manifest_md_fn;
-    msg('processing markdown targets: %s', Dumper(\@manifest_md_fn))
-        if @manifest_md_fn;
-
-
-
     #  Iterate
     #
     foreach my $fn (@manifest_md_fn) {
@@ -224,26 +202,26 @@ sub doc {
         #
         (my $target_fn=$fn)=~s/\.md$//;
 
-        msg("processing target: $target_fn");
         if ($target_fn=~/\.pm$/ || $target_fn=~/\.pl$/ || $exe_files{$target_fn}) {
             unless (-f $target_fn) {
-                msg("skipped missing target: $target_fn");
+                verbose("markpod: %s -> %s: skipped, missing target", $fn, $target_fn);
                 next;
             }
+            msg("markpod: %s -> %s: starting merge", $fn, $target_fn);
             my $markpod_or=Markdown::Pod::Embed->new();
             my $pod_changed=$markpod_or->markpod_process_and_update($target_fn);
             if (!defined $pod_changed) {
-                msg("skipped pod update: $target_fn");
+                msg("markpod: %s -> %s: finished, skipped", $fn, $target_fn);
             }
             elsif ($pod_changed) {
-                msg("updated pod: $target_fn");
+                msg("markpod: %s -> %s: finished, updated pod", $fn, $target_fn);
             }
             else {
-                msg("no changes to pod: $target_fn");
+                msg("markpod: %s -> %s: finished, no changes", $fn, $target_fn);
             }
         }
         else {
-            msg("skipped unsupported target: $target_fn");
+            verbose("markpod: %s -> %s: skipped, unsupported target", $fn, $target_fn);
 
         }
 
@@ -277,38 +255,40 @@ sub readme {
     my $readme_fn='README';
     my $markpod_or=Markdown::Pod::Embed->new();
     my $md;
+    my $source_fn;
 
 
     #  Resolve source precedence for README markdown
     #
     if (-f $readme_md_fn && !-l $readme_md_fn) {
-        msg('using README.md as markdown source');
+        $source_fn=$readme_md_fn;
         $md=slurp($readme_md_fn);
     }
     elsif (-e $version_from_md_fn) {
         readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
             return err();
+        $source_fn=$version_from_md_fn;
         $md=$markpod_or->markpod_markdown_source($version_from_fn);
-        msg('using markdown sidecar source: %s', $version_from_md_fn);
     }
     else {
         $md=$markpod_or->markpod_markdown_source($version_from_fn);
         unless (defined $md && length $md) {
-            msg('skipped README update: no markdown source for %s', $version_from_fn);
+            msg('markpod: %s -> %s: skipped, no markdown source', $version_from_fn, $readme_fn);
             return undef;
         }
+        $source_fn=$version_from_fn;
         touch($version_from_md_fn);
         push @manifest_add, $version_from_md_fn unless exists $manifest_hr->{$version_from_md_fn};
         readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
             return err();
-        msg('using embedded markdown source: %s', $version_from_fn);
     }
+    msg('markpod: %s -> %s: starting render', $source_fn, $readme_fn);
 
 
     #  No markdown means nothing to render
     #
     unless (defined $md && length $md) {
-        msg('skipped README update: resolved markdown source is empty');
+        msg('markpod: %s -> %s: finished, skipped empty markdown source', $source_fn, $readme_fn);
         manifest_add(\@manifest_add) if @manifest_add;
         return undef;
     }
@@ -317,7 +297,6 @@ sub readme {
     #  Convert markdown to text
     #
     my $text=$markpod_or->markpod_markdown_text($md);
-    msg("rendered README text");
     
 
     #  Update README only when changed
@@ -326,10 +305,10 @@ sub readme {
     if (md5_hex($existing_readme) ne md5_hex($text)) {
         $markpod_or->outfile($text, $readme_fn) ||
             return err();
-        msg('updated README');
+        msg('markpod: %s -> %s: finished, updated', $source_fn, $readme_fn);
     }
     else {
-        msg('no changes, README not updated');
+        msg('markpod: %s -> %s: finished, no changes', $source_fn, $readme_fn);
     }
 
     manifest_add(\@manifest_add) if @manifest_add;
@@ -354,7 +333,7 @@ sub readme_symlink {
     symlink($target_fn, $link_fn) ||
         return err("link of $target_fn to $link_fn failed, $!");
     push @{$manifest_add_ar}, $link_fn unless exists $manifest_hr->{$link_fn};
-    msg('created symlink: %s -> %s', $link_fn, $target_fn);
+    verbose('markpod: %s -> %s: created symlink', $target_fn, $link_fn);
     return 1;
 
 }
