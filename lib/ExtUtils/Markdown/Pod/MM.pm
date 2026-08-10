@@ -1,5 +1,5 @@
 #
-#  This file is part of Markdown::Pod::Embed.
+#  This file is part of ExtUtils::Markdown::Pod.
 #
 #  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
@@ -10,7 +10,7 @@
 #
 #  <http://dev.perl.org/licenses/>
 #
-package Markdown::Pod::Embed::MM;
+package ExtUtils::Markdown::Pod::MM;
 
 
 #  Compiler Pragma
@@ -24,12 +24,14 @@ sub BEGIN {local $^W=0}
 
 #  External Packages
 #
-use Markdown::Pod::Embed::MM::Constant;
-use Markdown::Pod::Embed::Constant;
-use Markdown::Pod::Embed::Util;
+use ExtUtils::MakeMaker;
+use ExtUtils::Markdown::Pod::MM::Constant;
+use ExtUtils::Markdown::Pod::Constant;
+use ExtUtils::Markdown::Pod::Util;
 use Digest::MD5 qw(md5_hex);
 use Config;
 use File::Spec;
+
 
 #  Version information in a formate suitable for CPAN etc. Must be
 #  all on one line
@@ -37,54 +39,122 @@ use File::Spec;
 $VERSION='0.010';
 
 
-#  use ExtUtils::MakeMaker as our parent class.
-#
-#use base 'ExtUtils::MakeMaker';
-use base 'ExtUtils::MM';
-
-
 #  All done, init finished
 #
 1;
 
 
-#===================================================================================================
+#======================================================================================================================
 
+#  Import and supporting utilities in this section
+#
+sub import0 {
 
-sub import {
-
-    $MY::->{__PACKAGE__}{'class'}=shift();
-    $MY::->{__PACKAGE__}{'import_tag'}=\@_ if @_;
-    $MY::->{__PACKAGE__}{'INC'}=\@INC;
-    1;
+   # ExtUtils::Markdown::Pod::Util->import(qw(const_config preamble));
+   # &ExtUtils::Markdown::Pod::Util::import('foo');
     
 }
 
 
-sub arg {
+sub import {
 
-    #  Convert MakeMaker target args to a named parameter hash.
+
+    #  Manage activation of various ExtUtils::Makemaker sections for this class.
     #
-    my (%param, @argv);
-    (@param{qw(NAME NAME_SYM DISTNAME DISTVNAME VERSION VERSION_SYM VERSION_FROM LICENSE AUTHOR TO_INST_PM EXE_FILES DIST_DEFAULT_TARGET SUFFIX ABSTRACT_FROM)}, @argv)=@_;
-    $param{'TO_INST_PM_AR'}=[split /\s+/, $param{'TO_INST_PM'}];
-    $param{'EXE_FILES_AR'}=[split /\s+/, $param{'EXE_FILES'}];
-    $param{'ARGV_AR'}=\@argv;
-    return \%param
+    #  use ExtUtils::<This Package> qw(const_config) to just replace the macros section of the Makefile
+    #  .. qw(dist_ci) to replace standard MakeMaker targets with our own
+    #  .. qw(:all) or no tag (i.e defaults) to all targers
+    #  
+    #
+    my $class=shift();
+    return if $_{$class}{'loaded'}++;
+    msg("initializing $class import");
+
+
+    #  Get params, bless self ref and remember import tags spec'd for later
+    #  re-use
+    #
+    my $self=bless (\my %self, $class);
+    my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@_};
+    $import_tag{':all'}++ unless keys %import_tag;
+
+
+    #  sections to replace
+    #
+    my @section=qw(
+        const_config
+        postamble
+    );
+    {   no warnings 'redefine';
+        foreach my $section (grep {$import_tag{$_} || $import_tag{':all'}} @section) {
+            $self{$section}=*{"ExtUtils::MM::${section}"}{CODE} unless (*{"ExtUtils::MM::${section}"}{CODE} eq \&{$section});
+            $self{$section} ||= ExtUtils::MM_Unix->can($section) || sub {''};
+            msg("import $section: %s", $self{$section} || '');
+            *{"ExtUtils::MM::${section}"}= sub {&{$section}($self, @_)};
+        }
+    }
+
+    msg("initializing $class import complete");
 
 }
 
 
+#======================================================================================================================
 
-sub ExtUtils::MY::postamble {
+#  ExtUtils::MakeMaker sections in this block
+#
+sub const_config {
 
 
     #  Get self ref
     #
-    my $mm_or=shift();
+    my ($self, $mm_or, @param)=@_;
+    (my $section = (caller(0))[3]) =~ s/^.*:://;
+    msg("generating %s $section", ref($self));
+    
+
+    #  Get original const_config ready for append
+    #
+    my $const_config=$self->{$section}($mm_or, @param);
+
+
+    #  Import Constants into macros
+    #
+    while (my ($key, $value)=each %{sprintf('%s::Constant::Constant', __PACKAGE__)}) {
+
+        #  Update macros with our config
+        #
+        $mm_or->{'macro'}{$key}=$value;
+
+    }
+
+
+    #  Now construct final PERLRUN string
+    #
+    my $perlrun=&perlrun($self);
+    $mm_or->{'PERLRUN'}=$perlrun;
+
+    
+    #  Macros all set, return whatever master const_config does
+    #
+    return $const_config;
+
+}
+
+
+sub postamble {
+
+
+    #  Get self ref
+    #
+    my ($self, $mm_or, @param)=@_;
+    (my $section = (caller(0))[3]) =~ s/^.*:://;
+    msg("generating %s $section", ref($self));
+
+
     #  Get original postamble ready for append
     #
-    my $postamble=$mm_or->SUPER::postamble();
+    my $postamble=$self->{$section}($mm_or, @param);
 
 
     #  Get patch dir and file name
@@ -104,68 +174,12 @@ sub ExtUtils::MY::postamble {
 }
 
 
-sub MM::const_config {
+#======================================================================================================================
 
-
-    #  Get self ref
-    #
-    my $mm_or=shift();
-    #  Import Constants into macros
-    #
-    while (my ($key, $value)=each %{sprintf('%s::Constant::Constant', __PACKAGE__)}) {
-
-        #  Update macros with our config
-        #
-        $mm_or->{'macro'}{$key}=$value;
-
-    }
-
-
-    #  Setup PERLRUN to recreate any added libraries, start by pulling @INC as of import time
-    #
-    my @INC=@{$MY::->{__PACKAGE__}{'INC'}};
-    
-
-    #  Discard duplicates
-    #
-    my %perlrun_inc;
-    @INC=grep {!$perlrun_inc{File::Spec->canonpath($_)}++} @INC;
-    
-    
-    #  Discard any compiled or environmental library paths
-    #
-    foreach my $lib (map {$Config{$_}} qw(privlib archlib sitelib sitearch vendorlib vendorarch)) { 
-        @INC=grep {!/^\Q${lib}\E/} @INC;
-    }
-    foreach my $lib (split (/\:/, $ENV{'PERL5LIB'})) { 
-        @INC=grep {!/^\Q${lib}\E/} @INC;
-    }
-    
-    
-    #  Now construct final PERLRUN string
-    #
-    my $perlrun;
-    my $perlrun_inc=join(' ', map {"-I$_"} grep {!$perlrun_inc{$_}++} @INC);
-    my $class=$MY::->{'__PACKAGE__'}{'class'};
-    if (my $import_tag_ar=$MY::->{__PACKAGE__}{'import_tag'}) {
-        $perlrun=sprintf("\$(PERL) $perlrun_inc -M${class}=%s", join(',', @{$import_tag_ar}));
-    }
-    else {
-        $perlrun="\$(PERL) $perlrun_inc -M${class}";
-    }
-    $mm_or->{'PERLRUN'}=$perlrun;
-
-    
-    #  Macros all set, return whatever master const_config does
-    #
-    return $mm_or->SUPER::const_config();
-
-
-}
-
-
-# Makefile Targets from here down
+#  Makefile Targets from here down
 # 
+
+
 sub doc {
 
 
@@ -174,7 +188,7 @@ sub doc {
     my ($self, $param_hr)=(shift(), arg(@_));
     my $exe_files_ar=$param_hr->{'EXE_FILES_AR'};
     my %exe_files=map {$_ => 1} @{$exe_files_ar};
-    require Markdown::Pod::Embed;
+    require ExtUtils::Markdown::Pod;
 
 
     #  Get manifest - only convert files in manifest
@@ -209,7 +223,7 @@ sub doc {
                 next;
             }
             msg("markpod: %s -> %s: starting merge", $fn, $target_fn);
-            my $markpod_or=Markdown::Pod::Embed->new();
+            my $markpod_or=ExtUtils::Markdown::Pod->new();
             my $pod_changed=$markpod_or->markpod_process_and_update($target_fn);
             if (!defined $pod_changed) {
                 msg("markpod: %s -> %s: finished, skipped", $fn, $target_fn);
@@ -242,7 +256,7 @@ sub readme {
     #  Build README text from README.md, VERSION_FROM sidecar or embedded markdown
     #
     my ($self, $param_hr)=(shift(), arg(@_));
-    require Markdown::Pod::Embed;
+    require ExtUtils::Markdown::Pod;
 
 
     #  Get manifest for any file additions we make
@@ -254,7 +268,7 @@ sub readme {
     my $version_from_md_fn=sprintf('%s.md', $version_from_fn);
     my $readme_md_fn='README.md';
     my $readme_fn='README';
-    my $markpod_or=Markdown::Pod::Embed->new();
+    my $markpod_or=ExtUtils::Markdown::Pod->new();
     my $md;
     my $source_fn;
 
@@ -361,7 +375,7 @@ __END__
 
 # NAME
 
-Markdown::Pod::Embed::MM - MakeMaker integration for Markdown::Pod::Embed
+ExtUtils::Markdown::Pod::MM - MakeMaker integration for ExtUtils::Markdown::Pod
 
 # SYNOPSIS
 
@@ -371,8 +385,8 @@ In `Makefile.PL`:
 BEGIN {
     use lib './lib';
     eval {
-        require Markdown::Pod::Embed;
-        Markdown::Pod::Embed->import;
+        require ExtUtils::Markdown::Pod;
+        ExtUtils::Markdown::Pod->import;
         1;
     };
 }
@@ -388,19 +402,19 @@ make readme
 
 # DESCRIPTION
 
-`Markdown::Pod::Embed::MM` contains the `ExtUtils::MakeMaker` integration for
-`Markdown::Pod::Embed`. The core processor is deliberately kept in
-`Markdown::Pod::Embed`; this module handles the MakeMaker hook points, generated
+`ExtUtils::Markdown::Pod::MM` contains the `ExtUtils::MakeMaker` integration for
+`ExtUtils::Markdown::Pod`. The core processor is deliberately kept in
+`ExtUtils::Markdown::Pod`; this module handles the MakeMaker hook points, generated
 Makefile targets, and README generation policy.
 
-When `Markdown::Pod::Embed` is imported from `Makefile.PL`, import dispatch is
+When `ExtUtils::Markdown::Pod` is imported from `Makefile.PL`, import dispatch is
 handed to this module. The module records enough MakeMaker context to rebuild
 the command line used by the generated `doc` and `readme` targets.
 
 # MAKEFILE INTEGRATION
 
 The module adds a postamble fragment containing targets that invoke
-`Markdown::Pod::Embed::MM` from the generated Makefile.
+`ExtUtils::Markdown::Pod::MM` from the generated Makefile.
 
 `doc`
 : Finds Markdown files listed in `MANIFEST`, derives each target by removing
@@ -427,7 +441,7 @@ README generation uses this source order:
 
 1. A real `README.md` file, if present.
 2. The sidecar for `VERSION_FROM`, for example
-   `lib/Markdown/Pod/Embed.pm.md`.
+   `lib/ExtUtils/Markdown/Pod.pm.md`.
 3. Embedded Markdown in the `VERSION_FROM` file.
 
 When the `VERSION_FROM` sidecar or embedded Markdown is used, the module creates
@@ -477,7 +491,7 @@ usable `MANIFEST` file.
 
 # SEE ALSO
 
-`Markdown::Pod::Embed`, `ExtUtils::MakeMaker`, `ExtUtils::MM`,
+`ExtUtils::Markdown::Pod`, `ExtUtils::MakeMaker`, `ExtUtils::MM`,
 `ExtUtils::Manifest`
 
 # AUTHOR
@@ -486,7 +500,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.
@@ -503,7 +517,7 @@ Full license text is available at:
 
 =head1 NAME
 
-Markdown::Pod::Embed::MM - MakeMaker integration for Markdown::Pod::Embed
+ExtUtils::Markdown::Pod::MM - MakeMaker integration for ExtUtils::Markdown::Pod
 
 
 =head1 SYNOPSIS
@@ -514,8 +528,8 @@ In C<Makefile.PL>:
  BEGIN {
      use lib './lib';
      eval {
-         require Markdown::Pod::Embed;
-         Markdown::Pod::Embed->import;
+         require ExtUtils::Markdown::Pod;
+         ExtUtils::Markdown::Pod->import;
          1;
      };
  }
@@ -528,12 +542,12 @@ Then run:
 
 =head1 DESCRIPTION
 
-C<Markdown::Pod::Embed::MM> contains the C<ExtUtils::MakeMaker> integration for
-C<Markdown::Pod::Embed>. The core processor is deliberately kept in
-C<Markdown::Pod::Embed>; this module handles the MakeMaker hook points, generated
+C<ExtUtils::Markdown::Pod::MM> contains the C<ExtUtils::MakeMaker> integration for
+C<ExtUtils::Markdown::Pod>. The core processor is deliberately kept in
+C<ExtUtils::Markdown::Pod>; this module handles the MakeMaker hook points, generated
 Makefile targets, and README generation policy.
 
-When C<Markdown::Pod::Embed> is imported from C<Makefile.PL>, import dispatch is
+When C<ExtUtils::Markdown::Pod> is imported from C<Makefile.PL>, import dispatch is
 handed to this module. The module records enough MakeMaker context to rebuild
 the command line used by the generated C<doc> and C<readme> targets.
 
@@ -541,7 +555,7 @@ the command line used by the generated C<doc> and C<readme> targets.
 =head1 MAKEFILE INTEGRATION
 
 The module adds a postamble fragment containing targets that invoke
-C<Markdown::Pod::Embed::MM> from the generated Makefile.
+C<ExtUtils::Markdown::Pod::MM> from the generated Makefile.
 
 C<doc>
 : Finds Markdown files listed in C<MANIFEST>, derives each target by removing
@@ -575,7 +589,7 @@ A real C<README.md> file, if present.
 =item 2.
 
 The sidecar for C<VERSION_FROM>, for example
-   C<lib/Markdown/Pod/Embed.pm.md>.
+   C<lib/ExtUtils/Markdown/Pod.pm.md>.
 
 
 =item 3.
@@ -598,7 +612,8 @@ The Markdown is rendered to plain text with C<pandoc> via C<IPC::Run3>.
 =head2 import
 
 Records the importing class, import tags, and current C<@INC> so MakeMaker
-targets can re-invoke the module with the same local library paths.
+targets can re-invoke the module with the same local library paths. Emits a
+status message confirming that the Makefile targets were installed.
 
 
 =head2 arg
@@ -641,7 +656,7 @@ usable C<MANIFEST> file.
 
 =head1 SEE ALSO
 
-C<Markdown::Pod::Embed>, C<ExtUtils::MakeMaker>, C<ExtUtils::MM>,
+C<ExtUtils::Markdown::Pod>, C<ExtUtils::MakeMaker>, C<ExtUtils::MM>,
 C<ExtUtils::Manifest>
 
 
@@ -652,7 +667,7 @@ Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
 
 =head1 LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 L<mailto:andrew.speer@isolutions.com.au>.

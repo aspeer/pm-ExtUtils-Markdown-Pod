@@ -1,5 +1,5 @@
 #
-#  This file is part of Markdown::Pod::Embed.
+#  This file is part of ExtUtils::Markdown::Pod.
 #
 #  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
@@ -10,8 +10,7 @@
 #
 #  <http://dev.perl.org/licenses/>
 #
-
-package Markdown::Pod::Embed::Util;
+package ExtUtils::Markdown::Pod::Util;
 
 
 #  Pragma
@@ -27,14 +26,15 @@ use FindBin qw($RealBin $Script);
 FindBin::again();
 use Data::Dumper;
 use IO::File;
-$Data::Dumper::Indent=1;
-$Data::Dumper::Terse=1;
+local $Data::Dumper::Indent=1;
+local $Data::Dumper::Terse=1;
+local $Data::Dumper::SortKeys=1;
 
 
 #  Export functions
 #
 use base 'Exporter';
-@EXPORT=qw(err msg verbose debug quiet_enable verbose_enable debug_enable Dumper slurp blurp touch);
+@EXPORT=qw(err msg verbose debug quiet_enable verbose_enable debug_enable Dumper slurp blurp touch arg perlrun);
 
 
 #  Version information in a format suitable for CPAN etc. Must be
@@ -54,6 +54,54 @@ $Script=~s/\.pl$//;
 1;
 
 #==================================================================================================
+
+
+sub import0 {
+
+
+    #  Manage activation of various ExtUtils::Makemaker sections for this class.
+    #
+    #  use ExtUtils::<This Package> qw(const_config) to just replace the macros section of the Makefile
+    #  .. qw(dist_ci) to replace standard MakeMaker targets with our own
+    #  .. qw(:all) or no tag (i.e defaults) to all targers
+    #  
+    #
+    die Dumper(\@_);
+    my ($class, @section)=@_;
+    return if $_{$class}{'loaded'}++;
+    msg("initializing $class import");
+
+
+    #  Get params, bless self ref and remember import tags spec'd for later
+    #  re-use
+    #
+    my $self=bless (\my %self, $class);
+    #my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@_};
+    #my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@import_tag};
+    #$import_tag{':all'}++ unless keys %import_tag;
+
+
+    #  sections to replace
+    #
+    #my @section=qw(
+    #    const_config
+    #    postamble
+    #);
+    {   no warnings 'redefine'; no strict 'refs';
+        #foreach my $section (grep {$import_tag{$_} || $import_tag{':all'}} @section) {
+        foreach my $section (@section) {
+            $self{$section}=*{"MM::${section}"}{CODE} unless (*{"MM::${section}"}{CODE} eq \&{$section});
+            #$self{$section}||=sub {};
+            #msg('%s: %s', $section, $self{$section});
+            msg("import $section");
+            *{"MM::${section}"}= sub {&{$section}($self, @_)};
+        }
+    }
+
+    msg("initializing $class import complete");
+
+}
+
 
 
 sub quiet_enable {
@@ -126,11 +174,20 @@ sub err {
 
 sub fmt {
 
+
     #  Format message nicely. Always called by err or msg so caller=2
     #
     my $message=sprintf(shift(), @_);
     chomp($message);
-    return $message;
+    my $caller=(caller(2))[3];
+    my ($class, $method)=($caller=~/^(.*)::([^:]+)$/);
+    $caller=~s/^_?!(_)//;
+    #my $format=' @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @*';
+    my $format=' @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @*';
+    local $^A='';
+    formline $format, "[$method]", $message;
+    #formline $format, "[$caller]", $message;
+    return $^A;
 
 }
 
@@ -180,18 +237,135 @@ sub touch {
     return blurp($fn, '');
 
 }
+
+
+sub perlrun {
+
+    
+    #  Get self ref
+    #
+    my $self=shift();
+
+
+    #  Construct PERL runtime
+    #
+    my $perl_inc_ar=&perl_inc;
+    
+    
+    #  And modules
+    #
+    my $perl_mod_ar=&perl_mod;
+
+
+    #  Now construct final PERLRUN string
+    #
+    my $perlrun;
+    my $perlrun_inc=join(' ', map {"-I$_"} @{$perl_inc_ar});
+    my $perlrun_mod=join(' ', map {"-M$_"} @{$perl_mod_ar});
+    my $class=ref($self);
+    if (my $import_tag_ar=$MY::->{__PACKAGE__}{'import_tag'}) {
+        $perlrun=sprintf("\$(PERL) $perlrun_inc $perlrun_mod -M${class}=%s", join(',', @{$import_tag_ar}));
+    }
+    else {
+        $perlrun="\$(PERL) $perlrun_inc $perlrun_mod -M${class}";
+    }
+    
+    
+    #  And return
+    #
+    return $perlrun
+    
+}
+
+
+sub perl_mod {
+
+    my %seen=(
+        __PACKAGE__ => 1
+    );
+    my @m=sort 
+        grep { !$seen{$_}++ } 
+        map {(my $m = $_) =~ s{\.pm$}{}; $m =~ s{/}{::}g; $m;}
+        grep { m{^ExtUtils/} }
+        keys %INC;
+    return \@m;
+}
+
+
+sub perl_inc {
+
+    #  Return array ref of any additional libraries specified via command line (-I)
+    #
+    my %default_inc=map { $_ => 1 } @{ perl_inc_default() || [] };
+    my %seen;
+    my @lib=grep {
+        !$default_inc{$_} && !$seen{$_}++
+    } map {
+        File::Spec->rel2abs($_)
+    } grep {
+        defined($_) && !ref($_) && length($_) && -d $_
+    } @INC;
+
+    return \@lib;
+}
+
+
+sub perl_inc_default {
+
+    my @default_inc;
+    if (open(my $perl_fh, '-|', $^X, '-e', 'print join qq(\0), grep { defined && !ref && length && -d } @INC')) {
+        local $/;
+        my $inc=<$perl_fh>;
+        close($perl_fh);
+        @default_inc=map {
+            File::Spec->rel2abs($_)
+        } split(/\0/, ($inc || ''));
+    }
+    return \@default_inc;
+}
+
+
+sub arg {
+
+    #  Convert MakeMaker target args to a named parameter hash.
+    #
+    my (%param, @argv);
+    (@param{qw(
+        NAME
+        NAME_SYM
+        DISTNAME
+        DISTVNAME
+        VERSION
+        VERSION_SYM
+        VERSION_FROM
+        LICENSE AUTHOR
+        TO_INST_PM
+        EXE_FILES
+        DIST_DEFAULT_TARGET
+        SUFFIX
+        ABSTRACT_FROM
+    )}, @argv)=@_;
+    $param{'TO_INST_PM_AR'}=[split /\s+/, $param{'TO_INST_PM'}];
+    $param{'EXE_FILES_AR'}=[split /\s+/, $param{'EXE_FILES'}];
+    $param{'ARGV_AR'}=\@argv;
+    return \%param
+
+}
+
+
+
 __END__
 
 =begin markdown
 
 # NAME
 
-Markdown::Pod::Embed::Util - small utility functions for markpod
+ExtUtils::Markdown::Pod::Util - small utility functions for markpod
 
 # SYNOPSIS
 
 ```perl
-use Markdown::Pod::Embed::Util;
+use ExtUtils::Markdown::Pod::Util;
 
 msg('markpod: %s -> %s: starting merge', $source, $target);
 verbose('markpod: %s: skipped unsupported target', $target);
@@ -204,8 +378,8 @@ touch($filename);
 
 # DESCRIPTION
 
-`Markdown::Pod::Embed::Util` provides the small shared helpers used by the
-`Markdown::Pod::Embed` modules and the `markpod` command.
+`ExtUtils::Markdown::Pod::Util` provides the small shared helpers used by the
+`ExtUtils::Markdown::Pod` modules and the `markpod` command.
 
 It is intentionally lightweight. It does not provide a logging framework or a
 configuration system; it only centralises status output, debug output, errors,
@@ -264,7 +438,7 @@ process should avoid treating the output flags as object-local state.
 
 # SEE ALSO
 
-`Markdown::Pod::Embed`, `Markdown::Pod::Embed::MM`
+`ExtUtils::Markdown::Pod`, `ExtUtils::Markdown::Pod::MM`
 
 # AUTHOR
 
@@ -272,7 +446,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.
@@ -289,13 +463,13 @@ Full license text is available at:
 
 =head1 NAME
 
-Markdown::Pod::Embed::Util - small utility functions for markpod
+ExtUtils::Markdown::Pod::Util - small utility functions for markpod
 
 
 =head1 SYNOPSIS
 
 
- use Markdown::Pod::Embed::Util;
+ use ExtUtils::Markdown::Pod::Util;
  
  msg('markpod: %s -> %s: starting merge', $source, $target);
  verbose('markpod: %s: skipped unsupported target', $target);
@@ -307,8 +481,8 @@ Markdown::Pod::Embed::Util - small utility functions for markpod
 
 =head1 DESCRIPTION
 
-C<Markdown::Pod::Embed::Util> provides the small shared helpers used by the
-C<Markdown::Pod::Embed> modules and the C<markpod> command.
+C<ExtUtils::Markdown::Pod::Util> provides the small shared helpers used by the
+C<ExtUtils::Markdown::Pod> modules and the C<markpod> command.
 
 It is intentionally lightweight. It does not provide a logging framework or a
 configuration system; it only centralises status output, debug output, errors,
@@ -372,7 +546,7 @@ process should avoid treating the output flags as object-local state.
 
 =head1 SEE ALSO
 
-C<Markdown::Pod::Embed>, C<Markdown::Pod::Embed::MM>
+C<ExtUtils::Markdown::Pod>, C<ExtUtils::Markdown::Pod::MM>
 
 
 =head1 AUTHOR
@@ -382,7 +556,7 @@ Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
 
 =head1 LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 L<mailto:andrew.speer@isolutions.com.au>.

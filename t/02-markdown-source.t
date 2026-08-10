@@ -7,7 +7,7 @@ use lib 'lib';
 use File::Temp qw(tempdir);
 use Test::More;
 
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
 sub spew {
     my ($fn, $content)=@_;
@@ -39,7 +39,7 @@ PM
 Sample::SidecarWins - sidecar markdown
 MD
 
-    my $md=Markdown::Pod::Embed->new->markpod_markdown_source($fn);
+    my $md=ExtUtils::Markdown::Pod->new->markpod_markdown_source($fn);
     like($md, qr/sidecar markdown/, 'sidecar markdown wins over embedded markdown');
     unlike($md, qr/embedded markdown/, 'embedded markdown is ignored when sidecar exists');
 }
@@ -62,7 +62,7 @@ Sample::EmbeddedOnly - embedded markdown
 =cut
 PM
 
-    my $md=Markdown::Pod::Embed->new->markpod_markdown_source($fn);
+    my $md=ExtUtils::Markdown::Pod->new->markpod_markdown_source($fn);
     like($md, qr/embedded markdown/, 'embedded markdown is used when no sidecar exists');
 }
 
@@ -81,7 +81,7 @@ Sample::Plain - plain POD
 =cut
 PM
 
-    my $md=Markdown::Pod::Embed->new->markpod_markdown_source($fn);
+    my $md=ExtUtils::Markdown::Pod->new->markpod_markdown_source($fn);
     is($md, undef, 'no markdown source returns undef');
 }
 

@@ -13,8 +13,8 @@ use version;
 BEGIN {
     use lib './lib';
     eval {
-        require Markdown::Pod::Embed;
-        Markdown::Pod::Embed->import;
+        require ExtUtils::Markdown::Pod;
+        ExtUtils::Markdown::Pod->import;
         1;
     }
 };
@@ -28,10 +28,10 @@ if ($mm_ver =~ /_/) { # dev version
     die $@ if $@;
 }
 my %WriteMakefile=(
-    NAME                => 'Markdown::Pod::Embed',
-    DISTNAME            => 'Markdown-Pod-Embed',
-    VERSION_FROM        => 'lib/Markdown/Pod/Embed.pm',
-    ABSTRACT_FROM       => 'lib/Markdown/Pod/Embed.pm',
+    NAME                => 'ExtUtils::Markdown::Pod',
+    DISTNAME            => 'ExtUtils-Markdown-Pod',
+    VERSION_FROM        => 'lib/ExtUtils/Markdown/Pod.pm',
+    ABSTRACT_FROM       => 'lib/ExtUtils/Markdown/Pod.pm',
     EXE_FILES           => ['bin/markpod.pl'],
     LICENSE             => 'perl',
     AUTHOR              => 'Andrew Speer <andrew.speer@isolutions.com.au>',

@@ -5,6 +5,6 @@
 use Test::More qw(no_plan);
 use_ok( 'PPI' );
 use_ok( 'Markdown::Pod' );
-use_ok( 'Markdown::Pod::Embed::Util' );
-use_ok( 'Markdown::Pod::Embed::Constant' );
-use_ok( 'Markdown::Pod::Embed' );
+use_ok( 'ExtUtils::Markdown::Pod::Util' );
+use_ok( 'ExtUtils::Markdown::Pod::Constant' );
+use_ok( 'ExtUtils::Markdown::Pod' );

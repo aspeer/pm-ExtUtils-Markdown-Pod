@@ -7,7 +7,7 @@ use lib 'lib';
 use File::Temp qw(tempdir);
 use Test::More;
 
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
 sub slurp {
     my ($fn)=@_;
@@ -38,7 +38,7 @@ Sample::Plain - plain pod only
 =cut
 PLAIN
     spew($fn, $orig);
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     is($changed, 0, 'plain POD without markdown reports no changes');
     $markpod_or->markpod_inplace_update($fn);
@@ -62,7 +62,7 @@ Sample::Embedded - embedded markdown
 =end markdown
 =cut
 EMBEDDED
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     ok($changed > 0, 'embedded markdown reports changes');
     $markpod_or->markpod_inplace_update($fn);
@@ -90,7 +90,7 @@ SIDECAR_PM
 
 Sample::Sidecar - sidecar markdown
 SIDECAR_MD
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     ok($changed > 0, 'sidecar markdown reports changes');
     $markpod_or->markpod_inplace_update($fn);
@@ -111,7 +111,7 @@ NO_POD_PM
 
 Sample::NoPod - sidecar markdown
 NO_POD_MD
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     is($changed, 1, 'sidecar markdown creates a new POD section');
     $markpod_or->markpod_inplace_update($fn);
@@ -144,7 +144,7 @@ SIDE_EMBED_PM
 
 Sample::SidecarOverEmbedded - sidecar markdown
 SIDE_EMBED_MD
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     ok($changed > 0, 'sidecar overrides embedded markdown');
     $markpod_or->markpod_inplace_update($fn);
@@ -177,7 +177,7 @@ Converted section
 =cut
 MULTI
     spew($fn, $orig);
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     ok($changed > 0, 'mixed POD reports changes');
     $markpod_or->markpod_inplace_update($fn);

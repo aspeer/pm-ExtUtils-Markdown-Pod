@@ -23,9 +23,9 @@ use warnings;
 
 #  Base External modules
 #
-use Markdown::Pod::Embed;
-use Markdown::Pod::Embed::Util;
-use Markdown::Pod::Embed::Constant;
+use ExtUtils::Markdown::Pod;
+use ExtUtils::Markdown::Pod::Util;
+use ExtUtils::Markdown::Pod::Constant;
 
 
 #  Other external modules
@@ -60,7 +60,7 @@ use constant {
     #  Option defaults
     #
     OPTION_HR => {
-        %{$OPTION_HR},                              # From Markdown::Pod::Embed::Constant;
+        %{$OPTION_HR},                              # From ExtUtils::Markdown::Pod::Constant;
         %{do(glob("~/.${Script}.option")) || {}}    # || {} avoids warning
     },
 
@@ -91,7 +91,7 @@ sub main {    #no subsort
 
     #  Get base object blassed with options as first arg.
     #
-    my $self=Markdown::Pod::Embed->new((my $opt_hr=shift()));
+    my $self=ExtUtils::Markdown::Pod->new((my $opt_hr=shift()));
     
     
     #  Output file name. Might be empty
@@ -285,7 +285,7 @@ markpod.pl lib/My/Module.pm
 
 # DESCRIPTION
 
-`markpod.pl` is the command-line interface for `Markdown::Pod::Embed`. It
+`markpod.pl` is the command-line interface for `ExtUtils::Markdown::Pod`. It
 processes Perl modules and scripts, finds Markdown documentation, converts that
 Markdown to POD, and writes a merged documentation block back into the source.
 
@@ -388,7 +388,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE and COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 
@@ -428,7 +428,7 @@ markpod - merge Markdown documentation into Perl POD
 
 =head1 DESCRIPTION
 
-C<markpod.pl> is the command-line interface for C<Markdown::Pod::Embed>. It
+C<markpod.pl> is the command-line interface for C<ExtUtils::Markdown::Pod>. It
 processes Perl modules and scripts, finds Markdown documentation, converts that
 Markdown to POD, and writes a merged documentation block back into the source.
 
@@ -530,7 +530,7 @@ Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
 
 =head1 LICENSE and COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer L<mailto:andrew.speer@isolutions.com.au>.
 

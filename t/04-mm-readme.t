@@ -9,8 +9,8 @@ use File::Path qw(make_path);
 use File::Temp qw(tempdir);
 use Test::More;
 
-use Markdown::Pod::Embed::Constant;
-use Markdown::Pod::Embed::MM;
+use ExtUtils::Markdown::Pod::Constant;
+use ExtUtils::Markdown::Pod::MM;
 
 plan skip_all => 'pandoc is required for README generation tests'
     unless $PANDOC_EXE;
@@ -51,7 +51,7 @@ lib/Sample/Readme.pm
 lib/Sample/Readme.pm.md
 MANIFEST
 
-Markdown::Pod::Embed::MM::readme(
+ExtUtils::Markdown::Pod::MM::readme(
     undef,
     '',
     '',

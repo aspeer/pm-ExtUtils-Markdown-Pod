@@ -1,11 +1,11 @@
 # NAME
 
-Markdown::Pod::Embed::Constant - constants for Markdown::Pod::Embed
+ExtUtils::Markdown::Pod::Constant - constants for ExtUtils::Markdown::Pod
 
 # SYNOPSIS
 
 ```perl
-use Markdown::Pod::Embed::Constant;
+use ExtUtils::Markdown::Pod::Constant;
 
 my $default_dialect = $OPTION_HR->{dialect};
 my $pandoc          = $PANDOC_EXE;
@@ -14,7 +14,7 @@ my $cmd             = $PANDOC_CMD_MD2TEXT_CR->($pandoc, '-');
 
 # DESCRIPTION
 
-`Markdown::Pod::Embed::Constant` defines exported constants used by the core
+`ExtUtils::Markdown::Pod::Constant` defines exported constants used by the core
 processor and command-line tool.
 
 The constants are stored in `%Constant`, exported as package variables, and can
@@ -38,7 +38,7 @@ be overridden by local configuration files loaded at compile time.
 ## bin_find
 
 ```perl
-my $path = Markdown::Pod::Embed::Constant::bin_find(qw(pandoc pandoc.exe));
+my $path = ExtUtils::Markdown::Pod::Constant::bin_find(qw(pandoc pandoc.exe));
 ```
 
 Searches `PATH` for the first executable-like file matching one of the supplied
@@ -50,8 +50,8 @@ empty string.
 Local constants can be overridden by files loaded from:
 
 ```text
-lib/Markdown/Pod/Embed/Constant.pm.local
-~/.Markdown::Pod::Embed::Constant.local
+lib/ExtUtils/Markdown/Pod/Constant.pm.local
+~/.ExtUtils::Markdown::Pod::Constant.local
 ```
 
 Those files are expected to return a hash reference suitable for merging into
@@ -59,7 +59,7 @@ Those files are expected to return a hash reference suitable for merging into
 
 # SEE ALSO
 
-`Markdown::Pod::Embed`
+`ExtUtils::Markdown::Pod`
 
 # AUTHOR
 
@@ -67,7 +67,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.

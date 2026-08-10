@@ -3,8 +3,8 @@
 The latest version of this software is always available from Github
 
 ```
-git clone https://github.com/aspeer/pm-Markdown-Pod-Embed
-cd pm-Markdown-Pod-Embed
+git clone https://github.com/aspeer/pm-ExtUtils-Markdown-Pod
+cd pm-ExtUtils-Markdown-Pod
 ```
 
 If on a modern system:

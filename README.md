@@ -1,13 +1,13 @@
 # NAME
 
-Markdown::Pod::Embed - keep Perl documentation in Markdown and ship it as POD
+ExtUtils::Markdown::Pod - keep Perl documentation in Markdown and ship it as POD
 
 # SYNOPSIS
 
 With `ExtUtils::MakeMaker`:
 
 ```bash
-perl -MMarkdown::Pod::Embed Makefile.PL
+perl -MExtUtils::Markdown::Pod Makefile.PL
 make doc
 ```
 
@@ -22,9 +22,9 @@ markpod.pl --extract-pod lib/My/Module.pm
 From a Perl module or script:
 
 ```perl
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
-my $markpod = Markdown::Pod::Embed->new({
+my $markpod = ExtUtils::Markdown::Pod->new({
     dialect  => 'GitHub',
     nobackup => 1,
 });
@@ -37,7 +37,7 @@ Makefile.
 
 # DESCRIPTION
 
-`Markdown::Pod::Embed` lets a distribution keep documentation in Markdown while
+`ExtUtils::Markdown::Pod` lets a distribution keep documentation in Markdown while
 still embedding generated POD in Perl modules and scripts. The Markdown source
 can live in a sidecar file such as `lib/My/Module.pm.md`, or inside a POD block
 marked with `=begin markdown` and `=end markdown`.
@@ -62,8 +62,8 @@ For example, `lib/My/Module.pm.md` is the source for
 
 # MAKE TARGETS
 
-The MakeMaker integration lives in `Markdown::Pod::Embed::MM` and is loaded
-automatically when `Markdown::Pod::Embed` is imported by `Makefile.PL`.
+The MakeMaker integration lives in `ExtUtils::Markdown::Pod::MM` and is loaded
+automatically when `ExtUtils::Markdown::Pod` is imported by `Makefile.PL`.
 
 `make doc`
 : Processes Markdown sidecars listed in `MANIFEST` and merges them into their
@@ -119,11 +119,11 @@ This distribution uses its own sidecar workflow. The important modules and the
 CLI have adjacent Markdown files:
 
 ```text
-lib/Markdown/Pod/Embed.pm.md
-lib/Markdown/Pod/Embed/MM.pm.md
-lib/Markdown/Pod/Embed/Util.pm.md
-lib/Markdown/Pod/Embed/Constant.pm.md
-lib/Markdown/Pod/Embed/MM/Constant.pm.md
+lib/ExtUtils/Markdown/Pod.pm.md
+lib/ExtUtils/Markdown/Pod/MM.pm.md
+lib/ExtUtils/Markdown/Pod/Util.pm.md
+lib/ExtUtils/Markdown/Pod/Constant.pm.md
+lib/ExtUtils/Markdown/Pod/MM/Constant.pm.md
 bin/markpod.pl.md
 README.md
 ```
@@ -144,7 +144,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.

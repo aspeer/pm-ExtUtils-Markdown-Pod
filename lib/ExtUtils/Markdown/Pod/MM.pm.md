@@ -1,6 +1,6 @@
 # NAME
 
-Markdown::Pod::Embed::MM - MakeMaker integration for Markdown::Pod::Embed
+ExtUtils::Markdown::Pod::MM - MakeMaker integration for ExtUtils::Markdown::Pod
 
 # SYNOPSIS
 
@@ -10,8 +10,8 @@ In `Makefile.PL`:
 BEGIN {
     use lib './lib';
     eval {
-        require Markdown::Pod::Embed;
-        Markdown::Pod::Embed->import;
+        require ExtUtils::Markdown::Pod;
+        ExtUtils::Markdown::Pod->import;
         1;
     };
 }
@@ -27,19 +27,19 @@ make readme
 
 # DESCRIPTION
 
-`Markdown::Pod::Embed::MM` contains the `ExtUtils::MakeMaker` integration for
-`Markdown::Pod::Embed`. The core processor is deliberately kept in
-`Markdown::Pod::Embed`; this module handles the MakeMaker hook points, generated
+`ExtUtils::Markdown::Pod::MM` contains the `ExtUtils::MakeMaker` integration for
+`ExtUtils::Markdown::Pod`. The core processor is deliberately kept in
+`ExtUtils::Markdown::Pod`; this module handles the MakeMaker hook points, generated
 Makefile targets, and README generation policy.
 
-When `Markdown::Pod::Embed` is imported from `Makefile.PL`, import dispatch is
+When `ExtUtils::Markdown::Pod` is imported from `Makefile.PL`, import dispatch is
 handed to this module. The module records enough MakeMaker context to rebuild
 the command line used by the generated `doc` and `readme` targets.
 
 # MAKEFILE INTEGRATION
 
 The module adds a postamble fragment containing targets that invoke
-`Markdown::Pod::Embed::MM` from the generated Makefile.
+`ExtUtils::Markdown::Pod::MM` from the generated Makefile.
 
 `doc`
 : Finds Markdown files listed in `MANIFEST`, derives each target by removing
@@ -66,7 +66,7 @@ README generation uses this source order:
 
 1. A real `README.md` file, if present.
 2. The sidecar for `VERSION_FROM`, for example
-   `lib/Markdown/Pod/Embed.pm.md`.
+   `lib/ExtUtils/Markdown/Pod.pm.md`.
 3. Embedded Markdown in the `VERSION_FROM` file.
 
 When the `VERSION_FROM` sidecar or embedded Markdown is used, the module creates
@@ -80,7 +80,8 @@ The Markdown is rendered to plain text with `pandoc` via `IPC::Run3`.
 ## import
 
 Records the importing class, import tags, and current `@INC` so MakeMaker
-targets can re-invoke the module with the same local library paths.
+targets can re-invoke the module with the same local library paths. Emits a
+status message confirming that the Makefile targets were installed.
 
 ## arg
 
@@ -116,7 +117,7 @@ usable `MANIFEST` file.
 
 # SEE ALSO
 
-`Markdown::Pod::Embed`, `ExtUtils::MakeMaker`, `ExtUtils::MM`,
+`ExtUtils::Markdown::Pod`, `ExtUtils::MakeMaker`, `ExtUtils::MM`,
 `ExtUtils::Manifest`
 
 # AUTHOR
@@ -125,7 +126,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.

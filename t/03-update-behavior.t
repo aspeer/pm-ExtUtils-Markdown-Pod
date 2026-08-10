@@ -7,7 +7,7 @@ use lib 'lib';
 use File::Temp qw(tempdir);
 use Test::More;
 
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
 sub slurp {
     my ($fn)=@_;
@@ -42,7 +42,7 @@ Sample::Backup - original markdown
 PM
     spew($fn, $orig);
 
-    my $changed=Markdown::Pod::Embed->new->markpod_process_and_update($fn);
+    my $changed=ExtUtils::Markdown::Pod->new->markpod_process_and_update($fn);
     ok($changed > 0, 'default update changes markdown-backed POD');
     ok(-f "${fn}.bak", 'default update creates backup file');
     is(slurp("${fn}.bak"), $orig, 'backup file preserves original content');
@@ -75,7 +75,7 @@ Second markdown block
 =cut
 PM
 
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     ok($changed > 0, 'multiple markdown-backed POD sections report changes');
     like($markpod_or->markdown, qr/first markdown block.*Second markdown block/s, 'markdown getter contains both sources in order');
@@ -96,7 +96,7 @@ PM
 Sample::EndNoNewline - sidecar markdown
 MD
 
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     is($changed, 1, 'sidecar creates POD after existing __END__ without trailing newline');
     $markpod_or->markpod_inplace_update($fn);
@@ -123,7 +123,7 @@ Sample::EndExtraBlank - embedded markdown
 =cut
 PM
 
-    my $markpod_or=Markdown::Pod::Embed->new({nobackup => 1});
+    my $markpod_or=ExtUtils::Markdown::Pod->new({nobackup => 1});
     my $changed=$markpod_or->markpod_process($fn);
     ok($changed > 0, 'existing markdown block with extra leading blanks reports changes');
     $markpod_or->markpod_inplace_update($fn);
@@ -156,7 +156,7 @@ Sample::EndExtraBlankOnly - embedded markdown
 =cut
 PM
 
-    my $changed=Markdown::Pod::Embed->new({nobackup => 1})->markpod_process_and_update($fn);
+    my $changed=ExtUtils::Markdown::Pod->new({nobackup => 1})->markpod_process_and_update($fn);
     ok($changed > 0, 'whitespace-only cleanup after __END__ reports a change');
     like(slurp($fn), qr/__END__\n\n=begin markdown\n\n# NAME/, 'whitespace-only cleanup after __END__ is saved');
 }
@@ -186,7 +186,7 @@ PM
 Sample::EndExtraBlankSidecar - sidecar markdown
 MD
 
-    my $changed=Markdown::Pod::Embed->new({nobackup => 1})->markpod_process_and_update($fn);
+    my $changed=ExtUtils::Markdown::Pod->new({nobackup => 1})->markpod_process_and_update($fn);
     ok($changed > 0, 'sidecar update with extra blanks after __END__ reports a change');
     my $updated=slurp($fn);
     like($updated, qr/__END__\n\n=begin markdown\n\n# NAME/, 'sidecar update collapses blank lines after __END__');

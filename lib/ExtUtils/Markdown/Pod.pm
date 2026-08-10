@@ -1,5 +1,5 @@
 #
-#  This file is part of Markdown::Pod::Embed.
+#  This file is part of ExtUtils::Markdown::Pod.
 #
 #  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
@@ -14,7 +14,7 @@
 
 #  Compiler pragma
 #
-package Markdown::Pod::Embed;
+package ExtUtils::Markdown::Pod;
 use strict;
 use warnings;
 use vars qw($VERSION @EXPORT_OK $VERSION_GIT_SHA $AUTHORITY);
@@ -22,8 +22,8 @@ use vars qw($VERSION @EXPORT_OK $VERSION_GIT_SHA $AUTHORITY);
 
 #  Base Packages
 #
-use Markdown::Pod::Embed::Util;
-use Markdown::Pod::Embed::Constant;
+use ExtUtils::Markdown::Pod::Util;
+use ExtUtils::Markdown::Pod::Constant;
 
 
 #  Base external modules
@@ -57,8 +57,8 @@ sub import {
     #  Let MakeMaker (MM) Module handle import routines
     #
     if ($0=~/Makefile\.PL$/) {
-        require Markdown::Pod::Embed::MM;
-        goto &Markdown::Pod::Embed::MM::import;
+        require ExtUtils::Markdown::Pod::MM;
+        goto &ExtUtils::Markdown::Pod::MM::import;
     }
 
 }
@@ -461,14 +461,14 @@ __END__
 
 # NAME
 
-Markdown::Pod::Embed - embed Markdown as POD in Perl source files
+ExtUtils::Markdown::Pod - embed Markdown as POD in Perl source files
 
 # OVERVIEW
 
 ```perl
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
-my $markpod = Markdown::Pod::Embed->new({
+my $markpod = ExtUtils::Markdown::Pod->new({
     dialect  => 'GitHub',
     nobackup => 1,
 });
@@ -484,15 +484,15 @@ my $pod      = $markpod->pod;
 ```
 
 ```perl
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
-my $markpod = Markdown::Pod::Embed->new;
+my $markpod = ExtUtils::Markdown::Pod->new;
 $markpod->markpod_process_and_update('bin/my-tool.pl');
 ```
 
 # SYNOPSIS
 
-`Markdown::Pod::Embed` is the core processing module behind the `markpod`
+`ExtUtils::Markdown::Pod` is the core processing module behind the `markpod`
 utility. It reads a Perl source file, determines the Markdown source to use for
 documentation, converts that Markdown to POD via `Markdown::Pod`, and updates
 the parsed source document via `PPI`.
@@ -588,7 +588,7 @@ bin/my-tool.pl.md
 Constructor.
 
 ```perl
-my $markpod = Markdown::Pod::Embed->new(\%opt);
+my $markpod = ExtUtils::Markdown::Pod->new(\%opt);
 ```
 
 Recognised options currently include:
@@ -699,9 +699,9 @@ appends it to the source file, inserting `__END__` if needed.
 Regenerate POD in place for a module:
 
 ```perl
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
-my $markpod = Markdown::Pod::Embed->new;
+my $markpod = ExtUtils::Markdown::Pod->new;
 my $changed = $markpod->markpod_process('lib/My/Module.pm');
 
 if (defined $changed && $changed) {
@@ -712,18 +712,18 @@ if (defined $changed && $changed) {
 Process a script with no existing POD but with a sidecar file:
 
 ```perl
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
-my $markpod = Markdown::Pod::Embed->new({ nobackup => 1 });
+my $markpod = ExtUtils::Markdown::Pod->new({ nobackup => 1 });
 $markpod->markpod_process_and_update('bin/my-tool.pl');
 ```
 
 Extract the raw generated POD for piping into another formatter:
 
 ```perl
-use Markdown::Pod::Embed;
+use ExtUtils::Markdown::Pod;
 
-my $markpod = Markdown::Pod::Embed->new;
+my $markpod = ExtUtils::Markdown::Pod->new;
 $markpod->markpod_process('bin/my-tool.pl');
 
 my $pod = $markpod->pod;
@@ -775,15 +775,15 @@ Full license text is available at:
 
 =head1 NAME
 
-Markdown::Pod::Embed - embed Markdown as POD in Perl source files
+ExtUtils::Markdown::Pod - embed Markdown as POD in Perl source files
 
 
 =head1 OVERVIEW
 
 
- use Markdown::Pod::Embed;
+ use ExtUtils::Markdown::Pod;
  
- my $markpod = Markdown::Pod::Embed->new({
+ my $markpod = ExtUtils::Markdown::Pod->new({
      dialect  => 'GitHub',
      nobackup => 1,
  });
@@ -797,14 +797,14 @@ Markdown::Pod::Embed - embed Markdown as POD in Perl source files
  my $markdown = $markpod->markdown;
  my $pod      = $markpod->pod;
 
- use Markdown::Pod::Embed;
+ use ExtUtils::Markdown::Pod;
  
- my $markpod = Markdown::Pod::Embed->new;
+ my $markpod = ExtUtils::Markdown::Pod->new;
  $markpod->markpod_process_and_update('bin/my-tool.pl');
 
 =head1 SYNOPSIS
 
-C<Markdown::Pod::Embed> is the core processing module behind the C<markpod>
+C<ExtUtils::Markdown::Pod> is the core processing module behind the C<markpod>
 utility. It reads a Perl source file, determines the Markdown source to use for
 documentation, converts that Markdown to POD via C<Markdown::Pod>, and updates
 the parsed source document via C<PPI>.
@@ -955,7 +955,7 @@ For scripts:
 Constructor.
 
 
- my $markpod = Markdown::Pod::Embed->new(\%opt);
+ my $markpod = ExtUtils::Markdown::Pod->new(\%opt);
 Recognised options currently include:
 
 C<dialect>
@@ -1125,9 +1125,9 @@ appends it to the source file, inserting C<__END__> if needed.
 Regenerate POD in place for a module:
 
 
- use Markdown::Pod::Embed;
+ use ExtUtils::Markdown::Pod;
  
- my $markpod = Markdown::Pod::Embed->new;
+ my $markpod = ExtUtils::Markdown::Pod->new;
  my $changed = $markpod->markpod_process('lib/My/Module.pm');
  
  if (defined $changed && $changed) {
@@ -1136,16 +1136,16 @@ Regenerate POD in place for a module:
 Process a script with no existing POD but with a sidecar file:
 
 
- use Markdown::Pod::Embed;
+ use ExtUtils::Markdown::Pod;
  
- my $markpod = Markdown::Pod::Embed->new({ nobackup => 1 });
+ my $markpod = ExtUtils::Markdown::Pod->new({ nobackup => 1 });
  $markpod->markpod_process_and_update('bin/my-tool.pl');
 Extract the raw generated POD for piping into another formatter:
 
 
- use Markdown::Pod::Embed;
+ use ExtUtils::Markdown::Pod;
  
- my $markpod = Markdown::Pod::Embed->new;
+ my $markpod = ExtUtils::Markdown::Pod->new;
  $markpod->markpod_process('bin/my-tool.pl');
  
  my $pod = $markpod->pod;

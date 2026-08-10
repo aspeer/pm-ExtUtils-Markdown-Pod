@@ -1,11 +1,11 @@
 # NAME
 
-Markdown::Pod::Embed::Util - small utility functions for markpod
+ExtUtils::Markdown::Pod::Util - small utility functions for markpod
 
 # SYNOPSIS
 
 ```perl
-use Markdown::Pod::Embed::Util;
+use ExtUtils::Markdown::Pod::Util;
 
 msg('markpod: %s -> %s: starting merge', $source, $target);
 verbose('markpod: %s: skipped unsupported target', $target);
@@ -18,8 +18,8 @@ touch($filename);
 
 # DESCRIPTION
 
-`Markdown::Pod::Embed::Util` provides the small shared helpers used by the
-`Markdown::Pod::Embed` modules and the `markpod` command.
+`ExtUtils::Markdown::Pod::Util` provides the small shared helpers used by the
+`ExtUtils::Markdown::Pod` modules and the `markpod` command.
 
 It is intentionally lightweight. It does not provide a logging framework or a
 configuration system; it only centralises status output, debug output, errors,
@@ -78,7 +78,7 @@ process should avoid treating the output flags as object-local state.
 
 # SEE ALSO
 
-`Markdown::Pod::Embed`, `Markdown::Pod::Embed::MM`
+`ExtUtils::Markdown::Pod`, `ExtUtils::Markdown::Pod::MM`
 
 # AUTHOR
 
@@ -86,7 +86,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.

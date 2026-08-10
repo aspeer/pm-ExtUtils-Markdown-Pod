@@ -1,5 +1,5 @@
 #
-#  This file is part of Markdown::Pod::Embed.
+#  This file is part of ExtUtils::Markdown::Pod.
 #
 #  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
@@ -16,7 +16,7 @@
 
 #  Pragma
 #
-package Markdown::Pod::Embed::MM::Constant;
+package ExtUtils::Markdown::Pod::MM::Constant;
 use strict qw(vars);
 use warnings;
 use vars qw($VERSION @ISA %EXPORT_TAGS @EXPORT_OK @EXPORT %Constant);
@@ -47,7 +47,7 @@ my $local_fn=abs_path(__FILE__) . '.local';
         File::Spec->catfile(dirname(__FILE__), 'Constant', 'postamble.inc'),
         
         
-    MM_PM => 'Markdown::Pod::Embed::MM',
+    MM_PM => 'ExtUtils::Markdown::Pod::MM',
     
     MM_ARGV => q["$(NAME)" "$(NAME_SYM)" "$(DISTNAME)" "$(DISTVNAME)" "$(VERSION)" ] .
         q["$(VERSION_SYM)" "$(VERSION_FROM)" "$(LICENSE)" "$(AUTHOR)" "$(TO_INST_PM)" "$(EXE_FILES)" "$(DIST_DEFAULT_TARGET)" "$(SUFFIX)" "$(ABSTRACT_FROM)"],
@@ -75,12 +75,12 @@ __END__
 
 # NAME
 
-Markdown::Pod::Embed::MM::Constant - constants for MakeMaker integration
+ExtUtils::Markdown::Pod::MM::Constant - constants for MakeMaker integration
 
 # SYNOPSIS
 
 ```perl
-use Markdown::Pod::Embed::MM::Constant;
+use ExtUtils::Markdown::Pod::MM::Constant;
 
 my $postamble = $TEMPLATE_POSTAMBLE_FN;
 my $module    = $MM_PM;
@@ -89,8 +89,8 @@ my $argv      = $MM_ARGV;
 
 # DESCRIPTION
 
-`Markdown::Pod::Embed::MM::Constant` defines constants used by
-`Markdown::Pod::Embed::MM` when it extends `ExtUtils::MakeMaker`.
+`ExtUtils::Markdown::Pod::MM::Constant` defines constants used by
+`ExtUtils::Markdown::Pod::MM` when it extends `ExtUtils::MakeMaker`.
 
 The constants describe where the Makefile postamble template lives, which Perl
 module should be invoked by the generated targets, and which MakeMaker
@@ -103,7 +103,7 @@ variables should be passed back into the target dispatcher.
 
 `$MM_PM`
 : Module name invoked by the generated Makefile targets. This is normally
-  `Markdown::Pod::Embed::MM`.
+  `ExtUtils::Markdown::Pod::MM`.
 
 `$MM_ARGV`
 : Quoted list of MakeMaker variables passed to the target dispatcher so methods
@@ -114,8 +114,8 @@ variables should be passed back into the target dispatcher.
 Local constants can be overridden by files loaded from:
 
 ```text
-lib/Markdown/Pod/Embed/MM/Constant.pm.local
-~/.Markdown::Pod::Embed::MM::Constant.local
+lib/ExtUtils/Markdown/Pod/MM/Constant.pm.local
+~/.ExtUtils::Markdown::Pod::MM::Constant.local
 ```
 
 Those files are expected to return a hash reference suitable for merging into
@@ -123,7 +123,7 @@ Those files are expected to return a hash reference suitable for merging into
 
 # SEE ALSO
 
-`Markdown::Pod::Embed::MM`, `ExtUtils::MakeMaker`
+`ExtUtils::Markdown::Pod::MM`, `ExtUtils::MakeMaker`
 
 # AUTHOR
 
@@ -131,7 +131,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.
@@ -148,13 +148,13 @@ Full license text is available at:
 
 =head1 NAME
 
-Markdown::Pod::Embed::MM::Constant - constants for MakeMaker integration
+ExtUtils::Markdown::Pod::MM::Constant - constants for MakeMaker integration
 
 
 =head1 SYNOPSIS
 
 
- use Markdown::Pod::Embed::MM::Constant;
+ use ExtUtils::Markdown::Pod::MM::Constant;
  
  my $postamble = $TEMPLATE_POSTAMBLE_FN;
  my $module    = $MM_PM;
@@ -162,8 +162,8 @@ Markdown::Pod::Embed::MM::Constant - constants for MakeMaker integration
 
 =head1 DESCRIPTION
 
-C<Markdown::Pod::Embed::MM::Constant> defines constants used by
-C<Markdown::Pod::Embed::MM> when it extends C<ExtUtils::MakeMaker>.
+C<ExtUtils::Markdown::Pod::MM::Constant> defines constants used by
+C<ExtUtils::Markdown::Pod::MM> when it extends C<ExtUtils::MakeMaker>.
 
 The constants describe where the Makefile postamble template lives, which Perl
 module should be invoked by the generated targets, and which MakeMaker
@@ -177,7 +177,7 @@ C<$TEMPLATE_POSTAMBLE_FN>
 
 C<$MM_PM>
 : Module name invoked by the generated Makefile targets. This is normally
-  C<Markdown::Pod::Embed::MM>.
+  C<ExtUtils::Markdown::Pod::MM>.
 
 C<$MM_ARGV>
 : Quoted list of MakeMaker variables passed to the target dispatcher so methods
@@ -189,15 +189,15 @@ C<$MM_ARGV>
 Local constants can be overridden by files loaded from:
 
 
- lib/Markdown/Pod/Embed/MM/Constant.pm.local
- ~/.Markdown::Pod::Embed::MM::Constant.local
+ lib/ExtUtils/Markdown/Pod/MM/Constant.pm.local
+ ~/.ExtUtils::Markdown::Pod::MM::Constant.local
 Those files are expected to return a hash reference suitable for merging into
 C<%Constant>.
 
 
 =head1 SEE ALSO
 
-C<Markdown::Pod::Embed::MM>, C<ExtUtils::MakeMaker>
+C<ExtUtils::Markdown::Pod::MM>, C<ExtUtils::MakeMaker>
 
 
 =head1 AUTHOR
@@ -207,7 +207,7 @@ Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
 
 =head1 LICENSE AND COPYRIGHT
 
-This file is part of Markdown::Pod::Embed.
+This file is part of ExtUtils::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 L<mailto:andrew.speer@isolutions.com.au>.
