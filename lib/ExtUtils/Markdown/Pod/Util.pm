@@ -56,54 +56,6 @@ $Script=~s/\.pl$//;
 #==================================================================================================
 
 
-sub import0 {
-
-
-    #  Manage activation of various ExtUtils::Makemaker sections for this class.
-    #
-    #  use ExtUtils::<This Package> qw(const_config) to just replace the macros section of the Makefile
-    #  .. qw(dist_ci) to replace standard MakeMaker targets with our own
-    #  .. qw(:all) or no tag (i.e defaults) to all targers
-    #  
-    #
-    die Dumper(\@_);
-    my ($class, @section)=@_;
-    return if $_{$class}{'loaded'}++;
-    msg("initializing $class import");
-
-
-    #  Get params, bless self ref and remember import tags spec'd for later
-    #  re-use
-    #
-    my $self=bless (\my %self, $class);
-    #my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@_};
-    #my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@import_tag};
-    #$import_tag{':all'}++ unless keys %import_tag;
-
-
-    #  sections to replace
-    #
-    #my @section=qw(
-    #    const_config
-    #    postamble
-    #);
-    {   no warnings 'redefine'; no strict 'refs';
-        #foreach my $section (grep {$import_tag{$_} || $import_tag{':all'}} @section) {
-        foreach my $section (@section) {
-            $self{$section}=*{"MM::${section}"}{CODE} unless (*{"MM::${section}"}{CODE} eq \&{$section});
-            #$self{$section}||=sub {};
-            #msg('%s: %s', $section, $self{$section});
-            msg("import $section");
-            *{"MM::${section}"}= sub {&{$section}($self, @_)};
-        }
-    }
-
-    msg("initializing $class import complete");
-
-}
-
-
-
 sub quiet_enable {
 
 
@@ -179,14 +131,14 @@ sub fmt {
     #
     my $message=sprintf(shift(), @_);
     chomp($message);
-    my $caller=(caller(2))[3];
+    my @caller=(caller(2));
+    my $caller=$caller[3] || $caller[0];
     my ($class, $method)=($caller=~/^(.*)::([^:]+)$/);
+    $method ||=$caller[0]; 
     $caller=~s/^_?!(_)//;
-    #my $format=' @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @*';
-    my $format=' @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @*';
+    my $format=' @<<<<<<<<<<<<<<<<<< @*';
     local $^A='';
     formline $format, "[$method]", $message;
-    #formline $format, "[$caller]", $message;
     return $^A;
 
 }
@@ -267,8 +219,7 @@ sub perlrun {
         $perlrun=sprintf("\$(PERL) $perlrun_inc $perlrun_mod -M${class}=%s", join(',', @{$import_tag_ar}));
     }
     else {
-        #$perlrun="\$(PERL) $perlrun_inc $perlrun_mod -M${class}";
-        $perlrun="\$(PERL) $perlrun_inc $perlrun_mod";
+        $perlrun="\$(PERL) $perlrun_inc $perlrun_mod -M${class}";
     }
     
     
@@ -287,7 +238,7 @@ sub perl_mod {
     my @m=sort 
         grep { !$seen{$_}++ } 
         map {(my $m = $_) =~ s{\.pm$}{}; $m =~ s{/}{::}g; $m;}
-        grep { m{^ExtUtils/} || m{^Local/ExtUtils/} }
+        grep { m{^ExtUtils/} }
         keys %INC;
     return \@m;
 }
