@@ -46,17 +46,11 @@ $VERSION='0.010';
 
 #======================================================================================================================
 
-#  Import and supporting utilities in this section
-#
+#use ExtUtils::Markdown::Pod::Import();
+#@ISA=qw(ExtUtils::Markdown::Pod::Import);
+
+
 sub import0 {
-
-   # ExtUtils::Markdown::Pod::Util->import(qw(const_config preamble));
-   # &ExtUtils::Markdown::Pod::Util::import('foo');
-    
-}
-
-
-sub import {
 
 
     #  Manage activation of various ExtUtils::Makemaker sections for this class.
@@ -77,9 +71,16 @@ sub import {
     my $self=bless (\my %self, $class);
     my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@_};
     $import_tag{':all'}++ unless keys %import_tag;
+    
+    
+    #  Build chain of MM modules loaded for this OS so we can search for
+    #  code ref's associated with various ExtUtils::MakeMaker sections;
+    #
+    my @mm_isa=grep {/^ExtUtils::MM/} @ExtUtils::MM::ISA;
+    push @mm_isa, map { @{"${_}::ISA"} } @mm_isa;
 
 
-    #  sections to replace
+    #  Sections to augment with additional targets
     #
     my @section=qw(
         const_config
@@ -88,12 +89,15 @@ sub import {
     {   no warnings 'redefine';
         foreach my $section (grep {$import_tag{$_} || $import_tag{':all'}} @section) {
             $self{$section}=*{"ExtUtils::MM::${section}"}{CODE} unless (*{"ExtUtils::MM::${section}"}{CODE} eq \&{$section});
+            $self{$section} ||= do {
+                my ($cr)=grep {$_} (map { $_->can($section) } @mm_isa);
+                $cr || sub {''};
+            };
             $self{$section} ||= ExtUtils::MM_Unix->can($section) || sub {''};
             msg("import $section: %s", $self{$section} || '');
             *{"ExtUtils::MM::${section}"}= sub {&{$section}($self, @_)};
         }
     }
-
     msg("initializing $class import complete");
 
 }
@@ -120,10 +124,12 @@ sub const_config {
 
     #  Import Constants into macros
     #
-    while (my ($key, $value)=each %{sprintf('%s::Constant::Constant', __PACKAGE__)}) {
+    #while (my ($key, $value)=each %{sprintf('%s::Constant::Constant', __PACKAGE__)}) {
+    while (my ($key, $value)=each %{sprintf('%s::Constant::Constant', ref($self))}) {
 
         #  Update macros with our config
         #
+        msg("update macro:$key, value:$value");
         $mm_or->{'macro'}{$key}=$value;
 
     }
@@ -132,7 +138,7 @@ sub const_config {
     #  Now construct final PERLRUN string
     #
     my $perlrun=&perlrun($self);
-    $mm_or->{'PERLRUN'}=$perlrun;
+    $mm_or->{'PERLRUN'} ||= $perlrun;
 
     
     #  Macros all set, return whatever master const_config does
@@ -178,7 +184,6 @@ sub postamble {
 
 #  Makefile Targets from here down
 # 
-
 
 sub doc {
 

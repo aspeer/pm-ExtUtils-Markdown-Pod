@@ -100,6 +100,12 @@ sub bin_find {
         ]
     },
 
+    UPDATE_DEST_UTIL_FN =>
+        File::Spec->catfile(dirname(__FILE__), 'Util.pm'),
+        
+    UPDATE_DEST_IMPORT_FN =>
+        File::Spec->catfile(dirname(__FILE__), 'Import.pm'),
+        
     #  Local constants override anything above
     #
     %{do($local_fn) || {}},

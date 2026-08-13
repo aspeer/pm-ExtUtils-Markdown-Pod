@@ -57,8 +57,9 @@ sub import {
     #  Let MakeMaker (MM) Module handle import routines
     #
     if ($0=~/Makefile\.PL$/) {
-        require ExtUtils::Markdown::Pod::MM;
-        goto &ExtUtils::Markdown::Pod::MM::import;
+        require ExtUtils::Markdown::Pod::Import;
+        push (@_,qw(const_config postamble)) unless $_[1];
+        goto &ExtUtils::Markdown::Pod::Import::import;
     }
 
 }

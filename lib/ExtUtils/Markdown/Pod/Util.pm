@@ -267,7 +267,8 @@ sub perlrun {
         $perlrun=sprintf("\$(PERL) $perlrun_inc $perlrun_mod -M${class}=%s", join(',', @{$import_tag_ar}));
     }
     else {
-        $perlrun="\$(PERL) $perlrun_inc $perlrun_mod -M${class}";
+        #$perlrun="\$(PERL) $perlrun_inc $perlrun_mod -M${class}";
+        $perlrun="\$(PERL) $perlrun_inc $perlrun_mod";
     }
     
     
@@ -286,7 +287,7 @@ sub perl_mod {
     my @m=sort 
         grep { !$seen{$_}++ } 
         map {(my $m = $_) =~ s{\.pm$}{}; $m =~ s{/}{::}g; $m;}
-        grep { m{^ExtUtils/} }
+        grep { m{^ExtUtils/} || m{^Local/ExtUtils/} }
         keys %INC;
     return \@m;
 }
