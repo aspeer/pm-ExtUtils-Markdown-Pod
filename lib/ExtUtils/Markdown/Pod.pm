@@ -10,29 +10,26 @@
 #
 #  <http://dev.perl.org/licenses/>
 #
-
-
-#  Compiler pragma
-#
 package ExtUtils::Markdown::Pod;
+
+
+#  Pragma
+#
 use strict;
 use warnings;
-use vars qw($VERSION @EXPORT_OK $VERSION_GIT_SHA $AUTHORITY);
+use vars qw($VERSION $VERSION_GIT_SHA $AUTHORITY);
 
 
 #  Base Packages
 #
+use ExtUtils::Markdown::Pod::MM ();
 use ExtUtils::Markdown::Pod::Util;
 use ExtUtils::Markdown::Pod::Constant;
 
 
-#  Base external modules
-#
-use File::Copy;
-
-
 #  Other external modules
 #
+use File::Copy;
 use PPI;
 use Markdown::Pod;
 

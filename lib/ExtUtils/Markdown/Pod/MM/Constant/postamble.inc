@@ -7,7 +7,7 @@ MARKPOD_TARGETS=
 
 #  Call modules with different method
 #
-MARKPOD_PERL_TARGET=$(PERL) -Ilib -I./lib -MExtUtils::Markdown::Pod::MM \
+MARKPOD_PERL_TARGET=$(PERLRUN) -MExtUtils::Markdown::Pod::MM \
 		-e 'my $$method=pop @ARGV; ExtUtils::Markdown::Pod::MM->$$method(@ARGV)' \
 		-- "$(NAME)" "$(NAME_SYM)" "$(DISTNAME)" "$(DISTVNAME)" "$(VERSION)" "$(VERSION_SYM)" "$(VERSION_FROM)" "$(LICENSE)" "$(AUTHOR)" "$(TO_INST_PM)" "$(EXE_FILES)" "$(DIST_DEFAULT_TARGET)" "$(SUFFIX)" "$(ABSTRACT_FROM)" $(MAKECMDGOALS)
 
