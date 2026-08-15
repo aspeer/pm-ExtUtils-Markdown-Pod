@@ -24,7 +24,7 @@ use warnings;
 #  Base External modules
 #
 use ExtUtils::Markdown::Pod;
-use ExtUtils::Markdown::Pod::Util;
+use ExtUtils::Markdown::Pod::MM::Util;
 use ExtUtils::Markdown::Pod::Constant;
 
 

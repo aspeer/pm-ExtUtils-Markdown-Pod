@@ -22,8 +22,8 @@ use vars qw($VERSION $VERSION_GIT_SHA $AUTHORITY);
 
 #  Base Packages
 #
-use ExtUtils::Markdown::Pod::MM ();
-use ExtUtils::Markdown::Pod::Util;
+#use ExtUtils::Markdown::Pod::MM ();
+use ExtUtils::Markdown::Pod::MM::Util;
 use ExtUtils::Markdown::Pod::Constant;
 
 
@@ -46,18 +46,17 @@ chomp($VERSION_GIT_SHA) if defined $VERSION_GIT_SHA;
 #
 1;
 
+
 #===================================================================================================
-
-
+#
+# Object creation and import methods
+#
 sub import {
 
     #  Let MakeMaker (MM) Module handle import routines
     #
-    if ($0=~/Makefile\.PL$/) {
-        require ExtUtils::Markdown::Pod::Import;
-        push (@_,qw(const_config postamble)) unless $_[1];
-        goto &ExtUtils::Markdown::Pod::Import::import;
-    }
+    require ExtUtils::Markdown::Pod::MM::Import;
+    goto &ExtUtils::Markdown::Pod::MM::Import::import;
 
 }
 
@@ -67,12 +66,16 @@ sub new {
     #  Bless self ref and retun
     #
     my ($class, $opt_hr)=@_;
+
+
     #  Get default options and overrides
     #
     my %opt=(
         %{$OPTION_HR},
         $opt_hr ? %{$opt_hr} : ()
     );
+
+
     #  Done
     #
     return bless({opt=>\%opt}, $class);
@@ -80,6 +83,10 @@ sub new {
 }
 
 
+#===================================================================================================
+# 
+#  Utility methods called from Makefile target handlers in MM
+#
 sub markpod_process {
 
 

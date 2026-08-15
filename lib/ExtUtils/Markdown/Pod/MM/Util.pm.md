@@ -1,11 +1,11 @@
 # NAME
 
-ExtUtils::Markdown::Pod::Util - small utility functions for markpod
+ExtUtils::Markdown::Pod::MM::Util - small utility functions for markpod
 
 # SYNOPSIS
 
 ```perl
-use ExtUtils::Markdown::Pod::Util;
+use ExtUtils::Markdown::Pod::MM::Util;
 
 msg('markpod: %s -> %s: starting merge', $source, $target);
 verbose('markpod: %s: skipped unsupported target', $target);
@@ -18,7 +18,7 @@ touch($filename);
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod::Util` provides the small shared helpers used by the
+`ExtUtils::Markdown::Pod::MM::Util` provides the small shared helpers used by the
 `ExtUtils::Markdown::Pod` modules and the `markpod` command.
 
 It is intentionally lightweight. It does not provide a logging framework or a

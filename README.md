@@ -121,9 +121,9 @@ CLI have adjacent Markdown files:
 ```text
 lib/ExtUtils/Markdown/Pod.pm.md
 lib/ExtUtils/Markdown/Pod/MM.pm.md
-lib/ExtUtils/Markdown/Pod/Util.pm.md
 lib/ExtUtils/Markdown/Pod/Constant.pm.md
 lib/ExtUtils/Markdown/Pod/MM/Constant.pm.md
+lib/ExtUtils/Markdown/Pod/MM/Util.pm.md
 bin/markpod.pl.md
 README.md
 ```

@@ -1,4 +1,3 @@
-requires 'Config';
 requires 'Cwd';
 requires 'Carp';
 requires 'Data::Dumper';
@@ -17,6 +16,7 @@ requires 'IPC::Run3';
 requires 'Markdown::Pod';
 requires 'PPI';
 requires 'Pod::Usage';
+requires 'Software::LicenseUtils';
 requires 'base';
 requires 'constant';
 requires 'strict';
@@ -26,7 +26,6 @@ requires 'warnings';
 on configure => sub {
     requires 'perl', '5.006';
     requires 'ExtUtils::MakeMaker';
-    requires 'Tie::File';
     requires 'version';
 };
 

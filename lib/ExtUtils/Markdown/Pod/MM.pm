@@ -22,15 +22,14 @@ no warnings qw(uninitialized);
 sub BEGIN {local $^W=0}
 
 
+#  Base Packages
+#
+use ExtUtils::Markdown::Pod::MM::Util;
+
+
 #  External Packages
 #
-use ExtUtils::MakeMaker;
-use ExtUtils::Markdown::Pod::MM::Constant;
-use ExtUtils::Markdown::Pod::Constant;
-use ExtUtils::Markdown::Pod::Util;
 use Digest::MD5 qw(md5_hex);
-use Config;
-use File::Spec;
 
 
 #  Version information in a formate suitable for CPAN etc. Must be
@@ -46,151 +45,15 @@ $VERSION='0.010';
 
 #======================================================================================================================
 
-#use ExtUtils::Markdown::Pod::Import();
-#@ISA=qw(ExtUtils::Markdown::Pod::Import);
-
-
-sub import0 {
-
-
-    #  Manage activation of various ExtUtils::Makemaker sections for this class.
-    #
-    #  use ExtUtils::<This Package> qw(const_config) to just replace the macros section of the Makefile
-    #  .. qw(dist_ci) to replace standard MakeMaker targets with our own
-    #  .. qw(:all) or no tag (i.e defaults) to all targers
-    #  
-    #
-    my $class=shift();
-    return if $_{$class}{'loaded'}++;
-    msg("initializing $class import");
-
-
-    #  Get params, bless self ref and remember import tags spec'd for later
-    #  re-use
-    #
-    my $self=bless (\my %self, $class);
-    my %import_tag=map {$_ => 1} @{$self{'import_tag'}=\@_};
-    $import_tag{':all'}++ unless keys %import_tag;
-    
-    
-    #  Build chain of MM modules loaded for this OS so we can search for
-    #  code ref's associated with various ExtUtils::MakeMaker sections;
-    #
-    my @mm_isa=grep {/^ExtUtils::MM/} @ExtUtils::MM::ISA;
-    push @mm_isa, map { @{"${_}::ISA"} } @mm_isa;
-
-
-    #  Sections to augment with additional targets
-    #
-    my @section=qw(
-        const_config
-        postamble
-    );
-    {   no warnings 'redefine';
-        foreach my $section (grep {$import_tag{$_} || $import_tag{':all'}} @section) {
-            $self{$section}=*{"ExtUtils::MM::${section}"}{CODE} unless (*{"ExtUtils::MM::${section}"}{CODE} eq \&{$section});
-            $self{$section} ||= do {
-                my ($cr)=grep {$_} (map { $_->can($section) } @mm_isa);
-                $cr || sub {''};
-            };
-            $self{$section} ||= ExtUtils::MM_Unix->can($section) || sub {''};
-            msg("import $section: %s", $self{$section} || '');
-            *{"ExtUtils::MM::${section}"}= sub {&{$section}($self, @_)};
-        }
-    }
-    msg("initializing $class import complete");
-
-}
-
-
-#======================================================================================================================
-
-#  ExtUtils::MakeMaker sections in this block
-#
-sub const_config {
-
-
-    #  Get self ref
-    #
-    my ($self, $mm_or, @param)=@_;
-    (my $section = (caller(0))[3]) =~ s/^.*:://;
-    msg("generating %s $section", ref($self));
-    
-
-    #  Get original const_config ready for append
-    #
-    my $const_config=$self->{$section}($mm_or, @param);
-
-
-    #  Import Constants into macros
-    #
-    #while (my ($key, $value)=each %{sprintf('%s::Constant::Constant', __PACKAGE__)}) {
-    while (my ($key, $value)=each %{sprintf('%s::Constant::Constant', ref($self))}) {
-
-        #  Update macros with our config
-        #
-        msg("update macro:$key, value:$value");
-        $mm_or->{'macro'}{$key}=$value;
-
-    }
-
-
-    #  Now construct final PERLRUN string
-    #
-    my $perlrun=&perlrun($self);
-    $mm_or->{'PERLRUN'} ||= $perlrun;
-
-    
-    #  Macros all set, return whatever master const_config does
-    #
-    return $const_config;
-
-}
-
-
-sub postamble {
-
-
-    #  Get self ref
-    #
-    my ($self, $mm_or, @param)=@_;
-    (my $section = (caller(0))[3]) =~ s/^.*:://;
-    msg("generating %s $section", ref($self));
-
-
-    #  Get original postamble ready for append
-    #
-    my $postamble=$self->{$section}($mm_or, @param);
-
-
-    #  Get patch dir and file name
-    #
-    my $patch_fn=$TEMPLATE_POSTAMBLE_FN;
-
-
-    #  Open it and slurp in
-    #
-    $postamble.=slurp($patch_fn);
-
-
-    #  All done, return result
-    #
-    return $postamble;
-
-}
-
-
-#======================================================================================================================
-
 #  Makefile Targets from here down
 # 
-
 sub doc {
 
 
     #  Convert MD files to POD
     #
     my ($self, $param_hr)=(shift(), arg(@_));
+    msg($self);
     my $exe_files_ar=$param_hr->{'EXE_FILES_AR'};
     my %exe_files=map {$_ => 1} @{$exe_files_ar};
     require ExtUtils::Markdown::Pod;
@@ -211,6 +74,8 @@ sub doc {
     #
     my @manifest_md_fn=sort grep {/\.md$/ && !m{^t/}} keys %{$manifest_hr};
     @manifest_md_fn=grep    {!$ignore_fn{$_}} @manifest_md_fn;
+
+
     #  Iterate
     #
     foreach my $fn (@manifest_md_fn) {

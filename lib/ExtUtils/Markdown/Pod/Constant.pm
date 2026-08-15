@@ -25,7 +25,6 @@ use vars qw($VERSION @ISA %EXPORT_TAGS @EXPORT_OK @EXPORT %Constant);
 #  Modules we need
 #
 use File::Spec;
-use File::Basename qw(dirname);
 
 
 #  Version information
@@ -100,12 +99,6 @@ sub bin_find {
         ]
     },
 
-    UPDATE_DEST_UTIL_FN =>
-        File::Spec->catfile(dirname(__FILE__), 'Util.pm'),
-        
-    UPDATE_DEST_IMPORT_FN =>
-        File::Spec->catfile(dirname(__FILE__), 'Import.pm'),
-        
     #  Local constants override anything above
     #
     %{do($local_fn) || {}},

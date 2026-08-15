@@ -44,13 +44,27 @@ my $local_fn=abs_path(__FILE__) . '.local';
 %Constant=(
 
     TEMPLATE_POSTAMBLE_FN =>
-        File::Spec->catfile(dirname(__FILE__), 'Constant', 'postamble.inc'),
+        File::Spec->catfile(dirname(__FILE__), 'postamble.inc'),
         
-        
-    MM_PM => 'ExtUtils::Markdown::Pod::MM',
+    MARKPOD_PM => 'ExtUtils::Markdown::Pod::MM',
     
-    MM_ARGV => q["$(NAME)" "$(NAME_SYM)" "$(DISTNAME)" "$(DISTVNAME)" "$(VERSION)" ] .
-        q["$(VERSION_SYM)" "$(VERSION_FROM)" "$(LICENSE)" "$(AUTHOR)" "$(TO_INST_PM)" "$(EXE_FILES)" "$(DIST_DEFAULT_TARGET)" "$(SUFFIX)" "$(ABSTRACT_FROM)"],
+    MARKPOD_PM_ARGV => join(',', qw[
+        "$(NAME)"
+        "$(NAME_SYM)"
+        "$(DISTNAME)"
+        "$(DISTVNAME)"
+        "$(VERSION)"
+        "$(VERSION_SYM)"
+        "$(VERSION_FROM)"
+        "$(LICENSE)"
+        "$(AUTHOR)"
+        "$(TO_INST_PM)"
+        "$(EXE_FILES)"
+        "$(DIST_DEFAULT_TARGET)"
+        "$(SUFFIX)"
+        "$(ABSTRACT_FROM)"
+    ]),
+
 
     #  Local constants override anything above
     #
