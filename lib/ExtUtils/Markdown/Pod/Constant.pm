@@ -29,7 +29,7 @@ use File::Spec;
 
 #  Version information
 #
-$VERSION='0.010';
+$VERSION='0.011';
 
 
 #  Get module file name and path, derive name of file to store local constants
