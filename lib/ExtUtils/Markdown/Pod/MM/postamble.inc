@@ -8,9 +8,7 @@ MARKPOD_TARGETS=
 .PHONY: doc readme $(MARKPOD_TARGETS)
 
 
-#  Call modules with different method
-#
-#  Call module method
+#  Call module with method
 #
 MARKPOD_PM_TARGET=$(PERLRUN) \
 	-e 'my $$method=shift(@ARGV) || $@; $(MARKPOD_PM)->$$method($(MARKPOD_PM_ARGV), @ARGV)'
@@ -21,7 +19,7 @@ MARKPOD_PM_TARGET=$(PERLRUN) \
 $(MARKPOD_TARGETS) ::
 	@$(MARKPOD_PM_TARGET)
 
-doc ::
+doc :: readme
 	@$(MARKPOD_PM_TARGET)
 
 readme ::

@@ -18,7 +18,6 @@ package ExtUtils::Markdown::Pod::MM::Util;
 use strict;
 use vars qw($VERSION $DEBUG $QUIET $VERBOSE @EXPORT);
 use warnings;
-no warnings qw(once);
 
 
 #  External modules
@@ -310,16 +309,16 @@ __END__
 
 =begin markdown
 
-# ExtUtils::Markdown::Pod::MM::Util
+# ExtUtils::Markdown::Pod::Util
 
 ## Name
 
-ExtUtils::Markdown::Pod::MM::Util - shared utility functions for MakeMaker helpers
+ExtUtils::Markdown::Pod::Util - shared utility functions for MakeMaker helpers
 
 ## Synopsis
 
 ```perl
-use ExtUtils::Markdown::Pod::MM::Util;
+use ExtUtils::Markdown::Pod::Util;
 
 msg('building %s', $name);
 my $text = slurp($file);
@@ -331,7 +330,7 @@ my $perlrun = perlrun($hook_object);
 
 ## Description
 
-`ExtUtils::Markdown::Pod::MM::Util` exports support functions used by the rest of
+`ExtUtils::Markdown::Pod::Util` exports support functions used by the rest of
 the distribution. The helpers cover formatted messages, debugging, simple file
 I/O, MakeMaker target argument parsing, and construction of a Perl command for
 generated make targets.
@@ -488,18 +487,18 @@ calling arguments instead of reading positional values directly.
 =end markdown
 
 
-=head1 ExtUtils::Markdown::Pod::MM::Util
+=head1 ExtUtils::Markdown::Pod::Util
 
 
 =head2 Name
 
-ExtUtils::Markdown::Pod::MM::Util - shared utility functions for MakeMaker helpers
+ExtUtils::Markdown::Pod::Util - shared utility functions for MakeMaker helpers
 
 
 =head2 Synopsis
 
 
- use ExtUtils::Markdown::Pod::MM::Util;
+ use ExtUtils::Markdown::Pod::Util;
  
  msg('building %s', $name);
  my $text = slurp($file);
@@ -510,7 +509,7 @@ ExtUtils::Markdown::Pod::MM::Util - shared utility functions for MakeMaker helpe
 
 =head2 Description
 
-C<ExtUtils::Markdown::Pod::MM::Util> exports support functions used by the rest of
+C<ExtUtils::Markdown::Pod::Util> exports support functions used by the rest of
 the distribution. The helpers cover formatted messages, debugging, simple file
 I/O, MakeMaker target argument parsing, and construction of a Perl command for
 generated make targets.

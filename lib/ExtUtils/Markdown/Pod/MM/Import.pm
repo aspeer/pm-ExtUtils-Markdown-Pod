@@ -34,6 +34,8 @@ use ExtUtils::Markdown::Pod::MM::Constant;
 use ExtUtils::MakeMaker;
 use Software::LicenseUtils;
 use File::Basename qw(basename);
+use File::Copy qw(copy);
+use Cwd qw(abs_path);
 
 
 #  Version information in a formate suitable for CPAN etc. Must be
@@ -83,7 +85,7 @@ sub import {
     #  Sections to augment with additional targets
     #
     {   no warnings qw(redefine once);
-        foreach my $section (qw(const_config depend postamble), @section) {
+        foreach my $section (qw(const_config depend postamble post_initialize init_main), @section) {
             next if $self{$section};
             $self{$section} =*{"ExtUtils::MM::${section}"}{CODE}; # unless (*{"ExtUtils::MM::${section}"}{CODE} eq \&{$section});
             $self{$section} ||= do {
@@ -100,7 +102,6 @@ sub import {
                 msg("import $section from %s", __PACKAGE__);
                 *{"ExtUtils::MM::${section}"}=sub { &{$section}($self, @_) };
             }
-            #*{"ExtUtils::MM::${section}"}=sub {&{sprintf('%s::MM::%s', ref($self), $section)}($self, @_)};
         }
     }
     msg("initializing $class import complete");
@@ -252,15 +253,100 @@ sub postamble {
 }
 
 
+sub post_initialize {
+
+
+    #  Add license file, other support files here
+    #
+    my ($self, $mm_or, @param)=@_;
+    (my $section = (caller(0))[3]) =~ s/^.*:://;
+    msg("generating %s $section", ref($self));
+
+
+    #  Get original postamble ready for append
+    #
+    my $post_initialize=$self->{$section}($mm_or, @param);
+
+
+    #  Add license file
+    #
+    $mm_or->{'PM'}{'LICENSE'}='$(INST_LIBDIR)/$(BASEEXT)/LICENSE' if -e 'LICENSE';
+    
+    
+    #  Add git ref if needed
+    #
+    if (grep {$mm_or->{'VERSION_FROM'} eq $_} @{$mm_or->{'EXE_FILES'}}) {
+        push @{$mm_or->{'EXE_FILES'}}, $mm_or->{'VERSION_FROM'}.'.sha';
+    }
+    
+    
+    #  Don't install docs/tmp files etc.
+    #
+    my %pm=map { $_=>$mm_or->{'PM'}{$_} } grep { !/\.(?:md|xml|pod|bak|tmp|0)$/ } keys %{$mm_or->{'PM'}};
+    $mm_or->{'PM'}=\%pm;
+    
+    
+    #  Update Git Ref in file if needed/available
+    #
+    my $devnull=File::Spec->devnull();
+    if (my $git_version=qx(git rev-parse --short HEAD 2>$devnull)) {
+        chomp $git_version;
+        require Tie::File;
+        tie my @lines, 'Tie::File', $mm_or->{'VERSION_FROM'} . '.sha' || die "error on Tie::File, $!";
+        $lines[0]=$git_version;
+    }
+    
+    #  Done
+    #
+    return $post_initialize
+
+}
+
+
+sub init_main {
+
+    #  Strip .pl, .sh extension from script files before installing
+    #
+    my ($self, $mm_or, @param)=@_;
+    (my $section = (caller(0))[3]) =~ s/^.*:://;
+    msg("generating %s $section", ref($self));
+
+
+    #  Get original section
+    #
+    my $init_main=$self->{$section}($mm_or, @param);
+
+
+    #  Now fix files
+    #
+    my @fn;
+    foreach my $fn (@{$mm_or->{'EXE_FILES'}}) {
+        (my $fn_new=$fn)=~s/\.(?:pl|sh)$//;
+        if ($fn_new ne $fn) {
+            -f $fn_new || do { eval{symlink(abs_path($fn), $fn_new)} || copy(abs_path($fn), $fn_new) }
+        }
+        push @fn, $fn_new;
+    }
+    $mm_or->{'EXE_FILES'}=\@fn;
+    
+    
+    #  And return
+    #
+    return $init_main;
+
+}
+
+
+
 __END__
 
 =begin markdown
 
-# ExtUtils::Markdown::Pod::MM::Import
+# ExtUtils::Markdown::Pod::Import
 
 ## Name
 
-ExtUtils::Markdown::Pod::MM::Import - import-time MakeMaker section hook manager
+ExtUtils::Markdown::Pod::Import - import-time MakeMaker section hook manager
 
 ## Synopsis
 
@@ -273,7 +359,7 @@ Usually this module is not used directly. It is invoked by
 
 ## Description
 
-`ExtUtils::Markdown::Pod::MM::Import` installs the MakeMaker hooks requested by the
+`ExtUtils::Markdown::Pod::Import` installs the MakeMaker hooks requested by the
 caller. For each requested MakeMaker section, it finds and stores the original
 implementation, then replaces the corresponding `ExtUtils::MM::*` method with
 a wrapper that calls this distribution's implementation.
@@ -291,7 +377,7 @@ the replacement can call it and append or modify the result.
 ## Import Behavior
 
 ```perl
-ExtUtils::Markdown::Pod::MM::Import->import(@sections);
+ExtUtils::Markdown::Pod::Import->import(@sections);
 ```
 
 The import process:
@@ -331,7 +417,7 @@ during Makefile generation.
 ## Diagnostics
 
 The module emits formatted status messages through
-`ExtUtils::Markdown::Pod::MM::Util::msg`. It dies if no `ExtUtils::MM` inheritance
+`ExtUtils::Markdown::Pod::Util::msg`. It dies if no `ExtUtils::MM` inheritance
 chain can be found.
 
 ## See Also
@@ -344,12 +430,12 @@ chain can be found.
 =end markdown
 
 
-=head1 ExtUtils::Markdown::Pod::MM::Import
+=head1 ExtUtils::Markdown::Pod::Import
 
 
 =head2 Name
 
-ExtUtils::Markdown::Pod::MM::Import - import-time MakeMaker section hook manager
+ExtUtils::Markdown::Pod::Import - import-time MakeMaker section hook manager
 
 
 =head2 Synopsis
@@ -362,7 +448,7 @@ C<ExtUtils::Markdown::Pod>.
 
 =head2 Description
 
-C<ExtUtils::Markdown::Pod::MM::Import> installs the MakeMaker hooks requested by the
+C<ExtUtils::Markdown::Pod::Import> installs the MakeMaker hooks requested by the
 caller. For each requested MakeMaker section, it finds and stores the original
 implementation, then replaces the corresponding C<ExtUtils::MM::*> method with
 a wrapper that calls this distribution's implementation.
@@ -379,7 +465,7 @@ the replacement can call it and append or modify the result.
 =head2 Import Behavior
 
 
- ExtUtils::Markdown::Pod::MM::Import->import(@sections);
+ ExtUtils::Markdown::Pod::Import->import(@sections);
 The import process:
 
 =over
@@ -436,7 +522,7 @@ during Makefile generation.
 =head2 Diagnostics
 
 The module emits formatted status messages through
-C<ExtUtils::Markdown::Pod::MM::Util::msg>. It dies if no C<ExtUtils::MM> inheritance
+C<ExtUtils::Markdown::Pod::Util::msg>. It dies if no C<ExtUtils::MM> inheritance
 chain can be found.
 
 
