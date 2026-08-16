@@ -3,9 +3,10 @@ MANIFEST.SKIP
 Makefile.PL
 README
 README.md
-bin/markpod.pl
-bin/markpod.pl.md
+bin/markpod
+bin/markpod.md
 lib/ExtUtils/Markdown/Pod.pm
+lib/ExtUtils/Markdown/Pod.pm.sha
 lib/ExtUtils/Markdown/Pod.pm.md
 lib/ExtUtils/Markdown/Pod/Constant.pm
 lib/ExtUtils/Markdown/Pod/Constant.pm.md
