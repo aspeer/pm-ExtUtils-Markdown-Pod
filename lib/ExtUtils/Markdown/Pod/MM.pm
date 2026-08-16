@@ -325,7 +325,8 @@ The Markdown is rendered to plain text with `pandoc` via `IPC::Run3`.
 ## import
 
 Records the importing class, import tags, and current `@INC` so MakeMaker
-targets can re-invoke the module with the same local library paths.
+targets can re-invoke the module with the same local library paths. Emits a
+status message confirming that the Makefile targets were installed.
 
 ## arg
 

@@ -1,7 +1,7 @@
 NAME
 
-ExtUtils::Markdown::Pod - keep Perl documentation in Markdown and ship it
-as POD
+ExtUtils::Markdown::Pod - keep Perl documentation in Markdown and ship
+it as POD
 
 SYNOPSIS
 
@@ -32,10 +32,11 @@ Makefile.
 
 DESCRIPTION
 
-ExtUtils::Markdown::Pod lets a distribution keep documentation in Markdown
-while still embedding generated POD in Perl modules and scripts. The
-Markdown source can live in a sidecar file such as lib/My/Module.pm.md,
-or inside a POD block marked with =begin markdown and =end markdown.
+ExtUtils::Markdown::Pod lets a distribution keep documentation in
+Markdown while still embedding generated POD in Perl modules and
+scripts. The Markdown source can live in a sidecar file such as
+lib/My/Module.pm.md, or inside a POD block marked with =begin markdown
+and =end markdown.
 
 When a file is processed, the module converts the Markdown to POD using
 Markdown::Pod, then writes a merged documentation block back to the Perl
@@ -61,16 +62,13 @@ The MakeMaker integration lives in ExtUtils::Markdown::Pod::MM and is
 loaded automatically when ExtUtils::Markdown::Pod is imported by
 Makefile.PL.
 
-make doc
+make doc : Processes Markdown sidecars listed in MANIFEST and merges
+them into their matching .pm, .pl, or executable targets. Markdown files
+under t/ are ignored so test fixtures are not rewritten by documentation
+builds.
 
-: Processes Markdown sidecars listed in MANIFEST and merges them into
-their matching .pm, .pl, or executable targets. Markdown files under t/
-are ignored so test fixtures are not rewritten by documentation builds.
-
-make readme
-
-: Builds README from README.md, from the VERSION_FROM sidecar, or from
-embedded Markdown in the VERSION_FROM file.
+make readme : Builds README from README.md, from the VERSION_FROM
+sidecar, or from embedded Markdown in the VERSION_FROM file.
 
 Status output is written to STDERR. Normal output is intentionally
 compact:
@@ -80,49 +78,30 @@ compact:
 
 COMMAND LINE OPTIONS
 
---inplace
+--inplace : Update the input file instead of writing the transformed
+source to STDOUT.
 
-: Update the input file instead of writing the transformed source to
-STDOUT.
+--file, --fn, --f, --in : Input file. Positional filenames are also
+accepted.
 
---file, --fn, --f, --in
+--outfile, --output, --o : File to write extracted Markdown, extracted
+POD, or transformed source to.
 
-: Input file. Positional filenames are also accepted.
+--extract-markdown, --extract, --md, --markdown : Extract Markdown
+without writing generated POD back to the source file.
 
---outfile, --output, --o
+--extract-pod, --pod : Extract generated POD.
 
-: File to write extracted Markdown, extracted POD, or transformed source
-to.
+--dialect : Markdown dialect passed through to Markdown::Pod. The
+default is GitHub.
 
---extract-markdown, --extract, --md, --markdown
+--nobackup : Do not create a .bak file when updating in place.
 
-: Extract Markdown without writing generated POD back to the source
-file.
+--quiet : Suppress status output.
 
---extract-pod, --pod
+--verbose : Include skip and support messages that are normally hidden.
 
-: Extract generated POD.
-
---dialect
-
-: Markdown dialect passed through to Markdown::Pod. The default is
-GitHub.
-
---nobackup
-
-: Do not create a .bak file when updating in place.
-
---quiet
-
-: Suppress status output.
-
---verbose
-
-: Include skip and support messages that are normally hidden.
-
---debug
-
-: Enable developer-oriented diagnostics.
+--debug : Enable developer-oriented diagnostics.
 
 DOGFOODING
 
