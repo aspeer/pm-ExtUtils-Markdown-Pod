@@ -1,99 +1,173 @@
-# NAME
+# ExtUtils::Markdown::Pod::MM::Util
 
-ExtUtils::Markdown::Pod::MM::Util - small utility functions for markpod
+## Name
 
-# SYNOPSIS
+ExtUtils::Markdown::Pod::MM::Util - shared utility functions for MakeMaker helpers
+
+## Synopsis
 
 ```perl
 use ExtUtils::Markdown::Pod::MM::Util;
 
-msg('markpod: %s -> %s: starting merge', $source, $target);
-verbose('markpod: %s: skipped unsupported target', $target);
-debug('processing file: %s', $filename);
+msg('building %s', $name);
+my $text = slurp($file);
+blurp($file, $text);
 
-my $text = slurp($filename);
-blurp($filename, $text);
-touch($filename);
+my $param = arg(@make_target_args);
+my $perlrun = perlrun($hook_object);
 ```
 
-# DESCRIPTION
+## Description
 
-`ExtUtils::Markdown::Pod::MM::Util` provides the small shared helpers used by the
-`ExtUtils::Markdown::Pod` modules and the `markpod` command.
+`ExtUtils::Markdown::Pod::MM::Util` exports support functions used by the rest of
+the distribution. The helpers cover formatted messages, debugging, simple file
+I/O, MakeMaker target argument parsing, and construction of a Perl command for
+generated make targets.
 
-It is intentionally lightweight. It does not provide a logging framework or a
-configuration system; it only centralises status output, debug output, errors,
-and simple file helpers.
+All listed functions are exported by default.
 
-# OUTPUT HELPERS
+## Functions
 
-Status output is written to STDERR so generated document content can safely be
-written to STDOUT.
+### quiet_enable
 
-`msg`
-: Prints a normal status line unless quiet mode is enabled.
+```perl
+quiet_enable();
+quiet_enable($value);
+```
 
-`verbose`
-: Prints a verbose status line only when verbose mode is enabled and quiet mode
-  is not enabled.
+Enables quiet mode. When quiet mode is active, `msg` and `verbose` output is
+suppressed.
 
-`debug`
-: Prints a developer diagnostic line when debug mode is enabled. Debug messages
-  include caller package, method, and line number.
+### verbose_enable
 
-`err`
-: Formats an error message, writes it to STDERR, and croaks.
+```perl
+verbose_enable();
+verbose_enable($value);
+```
 
-# CONTROL HELPERS
+Enables verbose output for `verbose`.
 
-`quiet_enable`
-: Enables quiet mode.
+### debug_enable
 
-`verbose_enable`
-: Enables verbose mode.
+```perl
+debug_enable($value);
+```
 
-`debug_enable`
-: Enables or disables debug mode.
+Sets the debug flag used by `debug`.
 
-The command-line tool wires these to `--quiet`, `--verbose`, and `--debug`.
-Debug mode can also be enabled with the script-specific environment variable
-derived from `FindBin`.
+The module also enables debug mode at load time if an environment variable
+named after the current script plus `_DEBUG` is set.
 
-# FILE HELPERS
+### msg
 
-`slurp`
-: Reads a whole file into a scalar.
+```perl
+msg('message %s', $value);
+```
 
-`blurp`
-: Writes a scalar to a file, replacing the existing content.
+Prints a formatted message to standard error unless quiet mode is enabled.
 
-`touch`
-: Creates an empty file if it does not already exist.
+### verbose
 
-# CAVEATS
+```perl
+verbose('message %s', $value);
+```
 
-The helper state is process-global. That is suitable for this distribution's
-CLI and MakeMaker use, but callers embedding the module in a longer-running
-process should avoid treating the output flags as object-local state.
+Prints a formatted message to standard error only when verbose mode is enabled
+and quiet mode is not enabled.
 
-# SEE ALSO
+### debug
 
-`ExtUtils::Markdown::Pod`, `ExtUtils::Markdown::Pod::MM`
+```perl
+debug('message %s', $value);
+```
 
-# AUTHOR
+Prints a debug message to standard error when debug mode is enabled. The output
+includes caller package, method, and line information.
 
-Andrew Speer <andrew.speer@isolutions.com.au>
+### err
 
-# LICENSE AND COPYRIGHT
+```perl
+err('unable to process %s', $file);
+```
 
-This file is part of ExtUtils::Markdown::Pod.
+Prints a formatted error message and croaks.
 
-This software is copyright (c) 2026 by Andrew Speer
-<andrew.speer@isolutions.com.au>.
+### slurp
 
-This is free software; you can redistribute it and/or modify it under
-the same terms as the Perl 5 programming language system itself.
+```perl
+my $text = slurp($file);
+```
 
-Full license text is available at:
+Reads and returns the full contents of a file. On failure, calls `err`.
 
-<http://dev.perl.org/licenses/>
+### blurp
+
+```perl
+blurp($file, $text);
+```
+
+Writes text to a file, replacing any existing content. Open, write, and close
+failures call `err`.
+
+### touch
+
+```perl
+touch($file);
+```
+
+Ensures a file exists. If the file is missing, creates it as an empty file.
+
+### arg
+
+```perl
+my $param = arg(@args);
+```
+
+Parses the fixed argument sequence passed by generated make targets into a hash
+reference. The recognized fields are:
+
+- `NAME`
+- `NAME_SYM`
+- `DISTNAME`
+- `DISTVNAME`
+- `VERSION`
+- `VERSION_SYM`
+- `VERSION_FROM`
+- `LICENSE`
+- `AUTHOR`
+- `TO_INST_PM`
+- `EXE_FILES`
+- `DIST_DEFAULT_TARGET`
+- `SUFFIX`
+- `ABSTRACT_FROM`
+
+Any remaining values are stored in `ARGV_AR`.
+
+The helper also derives:
+
+- `TO_INST_PM_AR` from whitespace-splitting `TO_INST_PM`
+- `EXE_FILES_AR` from whitespace-splitting `EXE_FILES`
+
+### perlrun
+
+```perl
+my $command = perlrun($hook_object, $make_maker_object);
+```
+
+Builds the global Makefile `PERLRUN` command beginning with `$(PERL)`. It
+includes non-default local `@INC` directories as `-I` options, the loaded
+`ExtUtils::*` modules as `-M` options, and the hook object's class as the final
+module. This preserves the MakeMaker extension environment for generated
+targets. When supplied, the active MakeMaker object quotes `-I` arguments for
+the platform shell.
+
+## Usage Conventions
+
+Functions in this module are intended for build-time helper code and generated
+make target methods. New make target methods should use `arg` to decode their
+calling arguments instead of reading positional values directly.
+
+## See Also
+
+- `ExtUtils::Markdown::Pod`
+- `ExtUtils::Markdown::Pod::MM`

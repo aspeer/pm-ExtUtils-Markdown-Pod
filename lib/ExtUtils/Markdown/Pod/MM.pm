@@ -45,7 +45,7 @@ $VERSION='0.011';
 
 #======================================================================================================================
 
-#  Makefile Targets from here down
+#  Makefile targets from here down
 # 
 sub doc {
 
@@ -56,7 +56,7 @@ sub doc {
     msg($self);
     my $exe_files_ar=$param_hr->{'EXE_FILES_AR'};
     my %exe_files=map {$_ => 1} @{$exe_files_ar};
-    require ExtUtils::Markdown::Pod;
+    require Markdown::Pod::Embed;
 
 
     #  Get manifest - only convert files in manifest
@@ -93,7 +93,7 @@ sub doc {
                 next;
             }
             msg("markpod: %s -> %s: starting merge", $fn, $target_fn);
-            my $markpod_or=ExtUtils::Markdown::Pod->new();
+            my $markpod_or=Markdown::Pod::Embed->new();
             my $pod_changed=$markpod_or->markpod_process_and_update($target_fn);
             if (!defined $pod_changed) {
                 msg("markpod: %s -> %s: finished, skipped", $fn, $target_fn);
@@ -123,10 +123,10 @@ sub doc {
 sub readme {
 
 
-    #  Build README text from README.md, VERSION_FROM sidecar or embedded markdown
+    #  Build README files from README.md or VERSION_FROM markdown
     #
     my ($self, $param_hr)=(shift(), arg(@_));
-    require ExtUtils::Markdown::Pod;
+    require Markdown::Pod::Embed;
 
 
     #  Get manifest for any file additions we make
@@ -135,37 +135,42 @@ sub readme {
     my $manifest_hr=ExtUtils::Manifest::maniread();
     my @manifest_add;
     my $version_from_fn=$param_hr->{'VERSION_FROM'};
-    my $version_from_md_fn=sprintf('%s.md', $version_from_fn);
     my $readme_md_fn='README.md';
     my $readme_fn='README';
-    my $markpod_or=ExtUtils::Markdown::Pod->new();
+    my $markpod_or=Markdown::Pod::Embed->new();
     my $md;
     my $source_fn;
 
 
-    #  Resolve source precedence for README markdown
+    #  Use an existing Markdown README when one is available
     #
-    if (-f $readme_md_fn && !-l $readme_md_fn) {
+    if (-f $readme_md_fn) {
         $source_fn=$readme_md_fn;
         $md=slurp($readme_md_fn);
     }
-    elsif (-e $version_from_md_fn) {
-        readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
-            return err();
-        $source_fn=$version_from_md_fn;
-        $md=$markpod_or->markpod_markdown_source($version_from_fn);
+    elsif (-e $readme_md_fn || -l $readme_md_fn) {
+        return err("$readme_md_fn exists and is not a regular file");
+    }
+    elsif (-e $readme_fn || -l $readme_fn) {
+        verbose('markpod: %s exists without %s, leaving both unchanged', $readme_fn, $readme_md_fn);
+        return undef;
     }
     else {
+        unless (defined $version_from_fn && length $version_from_fn) {
+            verbose('markpod: no VERSION_FROM file, no README files created');
+            return undef;
+        }
         $md=$markpod_or->markpod_markdown_source($version_from_fn);
         unless (defined $md && length $md) {
             msg('markpod: %s -> %s: skipped, no markdown source', $version_from_fn, $readme_fn);
             return undef;
         }
-        $source_fn=$version_from_fn;
-        touch($version_from_md_fn);
-        push @manifest_add, $version_from_md_fn unless exists $manifest_hr->{$version_from_md_fn};
-        readme_symlink($readme_md_fn, $version_from_md_fn, \@manifest_add, $manifest_hr) ||
+        my $readme_md=$md;
+        $readme_md.=$/ unless $readme_md=~/\n\z/;
+        blurp($readme_md_fn, $readme_md) ||
             return err();
+        push @manifest_add, $readme_md_fn unless exists $manifest_hr->{$readme_md_fn};
+        $source_fn=$readme_md_fn;
     }
     msg('markpod: %s -> %s: starting render', $source_fn, $readme_fn);
 
@@ -196,30 +201,8 @@ sub readme {
         msg('markpod: %s -> %s: finished, no changes', $source_fn, $readme_fn);
     }
 
+    push @manifest_add, $readme_fn unless exists $manifest_hr->{$readme_fn};
     manifest_add(\@manifest_add) if @manifest_add;
-
-}
-
-
-sub readme_symlink {
-
-    my ($link_fn, $target_fn, $manifest_add_ar, $manifest_hr)=@_;
-    if (-e $link_fn || -l $link_fn) {
-        if (-l $link_fn) {
-            my $current_target=readlink($link_fn);
-            return 1 if defined $current_target && $current_target eq $target_fn;
-            unlink($link_fn) ||
-                return err("unable to remove stale symlink $link_fn, $!");
-        }
-        else {
-            return err("$link_fn exists and is not a symlink");
-        }
-    }
-    symlink($target_fn, $link_fn) ||
-        return err("link of $target_fn to $link_fn failed, $!");
-    push @{$manifest_add_ar}, $link_fn unless exists $manifest_hr->{$link_fn};
-    verbose('markpod: %s -> %s: created symlink', $target_fn, $link_fn);
-    return 1;
 
 }
 
@@ -272,14 +255,13 @@ make readme
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod::MM` contains the `ExtUtils::MakeMaker` integration for
-`ExtUtils::Markdown::Pod`. The core processor is deliberately kept in
-`ExtUtils::Markdown::Pod`; this module handles the MakeMaker hook points, generated
-Makefile targets, and README generation policy.
+`ExtUtils::Markdown::Pod::MM` generates and executes the documentation targets
+used by `ExtUtils::MakeMaker`. Markdown source selection, Markdown-to-POD
+conversion, and Perl source updates are delegated to `Markdown::Pod::Embed`.
 
-When `ExtUtils::Markdown::Pod` is imported from `Makefile.PL`, import dispatch is
-handed to this module. The module records enough MakeMaker context to rebuild
-the command line used by the generated `doc` and `readme` targets.
+`ExtUtils::Markdown::Pod::MM::Import` installs the MakeMaker lifecycle hooks and
+appends the target template. This module handles the resulting `doc` and
+`readme` invocations.
 
 # MAKEFILE INTEGRATION
 
@@ -307,26 +289,22 @@ enabled.
 
 # README SOURCE PRECEDENCE
 
-README generation uses this source order:
+README generation observes the existing project files before creating anything:
 
-1. A real `README.md` file, if present.
-2. The sidecar for `VERSION_FROM`, for example
-   `lib/ExtUtils/Markdown/Pod.pm.md`.
-3. Embedded Markdown in the `VERSION_FROM` file.
+1. If `README.md` exists, it is used to generate or update `README`.
+2. If `README` exists without `README.md`, both are left unchanged.
+3. If neither exists, Markdown is obtained from the sidecar or embedded
+   documentation of the file named by `VERSION_FROM` and written to a new,
+   regular `README.md` file. `README` is then rendered from that file.
+4. If the `VERSION_FROM` file has no sidecar or embedded Markdown, no README
+   file is created.
 
-When the `VERSION_FROM` sidecar or embedded Markdown is used, the module creates
-`README.md` as a symlink to the sidecar source when possible and adds any new
-files to `MANIFEST`.
+The module never creates a `VERSION_FROM.md` sidecar. Generated README files are
+added to `MANIFEST`.
 
-The Markdown is rendered to plain text with `pandoc` via `IPC::Run3`.
+`Markdown::Pod::Embed` renders the Markdown to plain text with `pandoc`.
 
 # FUNCTIONS
-
-## import
-
-Records the importing class, import tags, and current `@INC` so MakeMaker
-targets can re-invoke the module with the same local library paths. Emits a
-status message confirming that the Makefile targets were installed.
 
 ## arg
 
@@ -343,27 +321,23 @@ targets in place.
 Renders the project README from Markdown according to the precedence described
 above.
 
-## readme_symlink
-
-Creates or refreshes the `README.md` symlink used when the README source is the
-`VERSION_FROM` sidecar.
-
 ## manifest_add
 
 Adds generated support files to `MANIFEST`.
 
 # CAVEATS
 
-This module intentionally contains the MakeMaker-specific behavior and package
-hooking so the core processor does not need to know about MakeMaker internals.
+This module contains MakeMaker-specific target generation and execution. The
+hook installation is isolated in `MM::Import`, and Markdown/POD processing is
+isolated in `Markdown::Pod::Embed`.
 
 The implementation expects a traditional MakeMaker distribution layout with a
 usable `MANIFEST` file.
 
 # SEE ALSO
 
-`ExtUtils::Markdown::Pod`, `ExtUtils::MakeMaker`, `ExtUtils::MM`,
-`ExtUtils::Manifest`
+`ExtUtils::Markdown::Pod`, `ExtUtils::Markdown::Pod::MM::Import`,
+`Markdown::Pod::Embed`, `ExtUtils::MakeMaker`, `ExtUtils::Manifest`
 
 # AUTHOR
 
@@ -413,14 +387,13 @@ Then run:
 
 =head1 DESCRIPTION
 
-C<ExtUtils::Markdown::Pod::MM> contains the C<ExtUtils::MakeMaker> integration for
-C<ExtUtils::Markdown::Pod>. The core processor is deliberately kept in
-C<ExtUtils::Markdown::Pod>; this module handles the MakeMaker hook points, generated
-Makefile targets, and README generation policy.
+C<ExtUtils::Markdown::Pod::MM> generates and executes the documentation targets
+used by C<ExtUtils::MakeMaker>. Markdown source selection, Markdown-to-POD
+conversion, and Perl source updates are delegated to C<Markdown::Pod::Embed>.
 
-When C<ExtUtils::Markdown::Pod> is imported from C<Makefile.PL>, import dispatch is
-handed to this module. The module records enough MakeMaker context to rebuild
-the command line used by the generated C<doc> and C<readme> targets.
+C<ExtUtils::Markdown::Pod::MM::Import> installs the MakeMaker lifecycle hooks and
+appends the target template. This module handles the resulting C<doc> and
+C<readme> invocations.
 
 
 =head1 MAKEFILE INTEGRATION
@@ -448,43 +421,42 @@ enabled.
 
 =head1 README SOURCE PRECEDENCE
 
-README generation uses this source order:
+README generation observes the existing project files before creating anything:
 
 =over
 
 =item 1.
 
-A real C<README.md> file, if present.
+If C<README.md> exists, it is used to generate or update C<README>.
 
 
 =item 2.
 
-The sidecar for C<VERSION_FROM>, for example
-   C<lib/ExtUtils/Markdown/Pod.pm.md>.
+If C<README> exists without C<README.md>, both are left unchanged.
 
 
 =item 3.
 
-Embedded Markdown in the C<VERSION_FROM> file.
+If neither exists, Markdown is obtained from the sidecar or embedded
+   documentation of the file named by C<VERSION_FROM> and written to a new,
+   regular C<README.md> file. C<README> is then rendered from that file.
+
+
+=item 4.
+
+If the C<VERSION_FROM> file has no sidecar or embedded Markdown, no README
+   file is created.
 
 
 =back
 
-When the C<VERSION_FROM> sidecar or embedded Markdown is used, the module creates
-C<README.md> as a symlink to the sidecar source when possible and adds any new
-files to C<MANIFEST>.
+The module never creates a C<VERSION_FROM.md> sidecar. Generated README files are
+added to C<MANIFEST>.
 
-The Markdown is rendered to plain text with C<pandoc> via C<IPC::Run3>.
+C<Markdown::Pod::Embed> renders the Markdown to plain text with C<pandoc>.
 
 
 =head1 FUNCTIONS
-
-
-=head2 import
-
-Records the importing class, import tags, and current C<@INC> so MakeMaker
-targets can re-invoke the module with the same local library paths. Emits a
-status message confirming that the Makefile targets were installed.
 
 
 =head2 arg
@@ -505,12 +477,6 @@ Renders the project README from Markdown according to the precedence described
 above.
 
 
-=head2 readme_symlink
-
-Creates or refreshes the C<README.md> symlink used when the README source is the
-C<VERSION_FROM> sidecar.
-
-
 =head2 manifest_add
 
 Adds generated support files to C<MANIFEST>.
@@ -518,8 +484,9 @@ Adds generated support files to C<MANIFEST>.
 
 =head1 CAVEATS
 
-This module intentionally contains the MakeMaker-specific behavior and package
-hooking so the core processor does not need to know about MakeMaker internals.
+This module contains MakeMaker-specific target generation and execution. The
+hook installation is isolated in C<MM::Import>, and Markdown/POD processing is
+isolated in C<Markdown::Pod::Embed>.
 
 The implementation expects a traditional MakeMaker distribution layout with a
 usable C<MANIFEST> file.
@@ -527,8 +494,8 @@ usable C<MANIFEST> file.
 
 =head1 SEE ALSO
 
-C<ExtUtils::Markdown::Pod>, C<ExtUtils::MakeMaker>, C<ExtUtils::MM>,
-C<ExtUtils::Manifest>
+C<ExtUtils::Markdown::Pod>, C<ExtUtils::Markdown::Pod::MM::Import>,
+C<Markdown::Pod::Embed>, C<ExtUtils::MakeMaker>, C<ExtUtils::Manifest>
 
 
 =head1 AUTHOR

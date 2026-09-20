@@ -17,6 +17,10 @@ my $argv      = $MM_ARGV;
 `ExtUtils::Markdown::Pod::MM::Constant` defines constants used by
 `ExtUtils::Markdown::Pod::MM` when it extends `ExtUtils::MakeMaker`.
 
+`MM_PREFIX` selects the private `MARKPOD_*` Makefile macro namespace used by
+the shared hook implementation. It is hook configuration and is not emitted as
+a generic `MM_PREFIX` Makefile macro.
+
 The constants describe where the Makefile postamble template lives, which Perl
 module should be invoked by the generated targets, and which MakeMaker
 variables should be passed back into the target dispatcher.

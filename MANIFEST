@@ -6,13 +6,13 @@ README.md
 bin/markpod
 bin/markpod.md
 lib/ExtUtils/Markdown/Pod.pm
-lib/ExtUtils/Markdown/Pod.pm.sha
 lib/ExtUtils/Markdown/Pod.pm.md
 lib/ExtUtils/Markdown/Pod/Constant.pm
 lib/ExtUtils/Markdown/Pod/Constant.pm.md
 lib/ExtUtils/Markdown/Pod/MM/Constant.pm
 lib/ExtUtils/Markdown/Pod/MM/Constant.pm.md
 lib/ExtUtils/Markdown/Pod/MM/Import.pm
+lib/ExtUtils/Markdown/Pod/MM/Import.pm.md
 lib/ExtUtils/Markdown/Pod/MM/Util.pm
 lib/ExtUtils/Markdown/Pod/MM/Util.pm.md
 lib/ExtUtils/Markdown/Pod/MM/postamble.inc
@@ -25,6 +25,7 @@ t/01-embed-process.t
 t/02-markdown-source.t
 t/03-update-behavior.t
 t/04-mm-readme.t
+t/05-mm-integration.t
 INSTALL.md
 INSTALL
 t/data/embedded-sample.pl                

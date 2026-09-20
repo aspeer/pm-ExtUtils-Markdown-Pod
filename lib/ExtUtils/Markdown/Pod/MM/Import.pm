@@ -1,7 +1,7 @@
 #
 #  This file is part of ExtUtils::Markdown::Pod.
 #
-#  This software is copyright (c) 2026 by Andrew Speer <aspeer@localdomain>.
+#  This software is copyright (c) 2026 by Andrew Speer <andrew.speer.com.au>.
 #
 #  This is free software; you can redistribute it and/or modify it under
 #  the same terms as the Perl 5 programming language system itself.
@@ -13,13 +13,11 @@
 package ExtUtils::Markdown::Pod::MM::Import;
 
 
-#  Compiler Pragma
+#  Pragma
 #
 use strict qw(vars);
-use vars   qw($VERSION @ISA $IMPORTED);
 use warnings;
-no warnings qw(uninitialized);
-sub BEGIN {local $^W=0}
+use vars qw($VERSION);
 
 
 #  Base Packages
@@ -34,8 +32,7 @@ use ExtUtils::Markdown::Pod::MM::Constant;
 use ExtUtils::MakeMaker;
 use Software::LicenseUtils;
 use File::Basename qw(basename);
-use File::Copy qw(copy);
-use Cwd qw(abs_path);
+use Tie::File;
 
 
 #  Version information in a formate suitable for CPAN etc. Must be
@@ -68,6 +65,16 @@ sub import {
     msg("initializing $class import");
 
 
+    #  Remember extension activation order for generated PERLRUN commands
+    #
+    {
+        no warnings qw(once);
+        push(@MY::ExtUtils_MM_Import_Order, $class)
+            unless grep {$class eq $_} @MY::ExtUtils_MM_Import_Order;
+        $MY::ExtUtils_MM_Import_Tag{$class}=[@section];
+    }
+
+
     #  Get params, bless self ref and remember import tags spec'd for later
     #  re-use
     #
@@ -85,7 +92,7 @@ sub import {
     #  Sections to augment with additional targets
     #
     {   no warnings qw(redefine once);
-        foreach my $section (qw(const_config depend postamble post_initialize init_main), @section) {
+        foreach my $section (qw(const_config depend postamble post_initialize), @section) {
             next if $self{$section};
             $self{$section} =*{"ExtUtils::MM::${section}"}{CODE}; # unless (*{"ExtUtils::MM::${section}"}{CODE} eq \&{$section});
             $self{$section} ||= do {
@@ -127,10 +134,13 @@ sub const_config {
 
     #  Import Constants into macros
     #
-    while (my ($key, $value)=each %{sprintf('%s::MM::Constant::Constant', ref($self))}) {
+    my $constant_hr=\%{sprintf('%s::MM::Constant::Constant', ref($self))};
+    foreach my $key (keys %{$constant_hr}) {
 
         #  Update macros with our config
         #
+        next if $key eq 'MM_PREFIX';
+        my $value=$constant_hr->{$key};
         msg("add macro: $key, value: $value");
         $mm_or->{'macro'}{$key}=$value;
 
@@ -139,34 +149,29 @@ sub const_config {
 
     #   Update license data. Get license type and author
     #
-    my $license=$mm_or->{'LICENSE'} ||
-        return err('no license specified in Makefile');
-    my @author=@{
-        $mm_or->{'AUTHOR'}
-            ||
-            return err('no author specified in Makefile')};
+    my $license=$mm_or->{'LICENSE'};
+    my @author=@{$mm_or->{'AUTHOR'} || []};
     my $author=shift(@author);
 
 
-    #  Choose appropriate module
+    #  Publish supplied values and enrich complete license metadata
     #
-    my @license_module=Software::LicenseUtils->guess_license_from_meta_key($license);
-    @license_module ||
-        return err("unable to determine correct license module from string: $license");
-    (@license_module > 1) &&
-        return err("ambiguous license string: $license, resolves to %s", join(',', @license_module));
-    my $license_or=(shift @license_module)->new({holder => $author});
-
-
-    #  Generate data later used in META files
-    #
-    @{$mm_or->{'macro'}}{qw(LICENSE AUTHOR)}=($license, $author);
-    $mm_or->{'META_MERGE'}{'resources'}{'license'}=$license_or->url();
+    $mm_or->{'macro'}{'LICENSE'}=$license if defined($license) && length($license);
+    $mm_or->{'macro'}{'AUTHOR'}=$author if defined($author) && length($author);
+    if ($license && $author) {
+        my @license_module=Software::LicenseUtils->guess_license_from_meta_key($license);
+        @license_module ||
+            return err("unable to determine correct license module from string: $license");
+        (@license_module > 1) &&
+            return err("ambiguous license string: $license, resolves to %s", join(',', @license_module));
+        my $license_or=(shift @license_module)->new({holder => $author});
+        $mm_or->{'META_MERGE'}{'resources'}{'license'}=$license_or->url();
+    }
 
 
     #  Now construct final PERLRUN string
     #
-    my $perlrun=&perlrun($self);
+    my $perlrun=&perlrun($self, $mm_or);
     $mm_or->{'PERLRUN'}=$perlrun;
 
 
@@ -201,10 +206,13 @@ sub depend {
     my $depend=$self->{$section}($mm_or, @param);
 
 
-    #  If nothing generate default
+    #  Add VERSION_FROM without replacing existing dependencies
     #
-    if (!$depend && $mm_or->{'VERSION_FROM'}) {
-        $depend='Makefile : $(VERSION_FROM)';
+    $depend='' unless defined($depend);
+    if ($mm_or->{'VERSION_FROM'} &&
+        $depend!~/^Makefile\s*:[^\n]*\$\(VERSION_FROM\)/m) {
+        $depend.=$/ if length($depend) && substr($depend, -1) ne $/;
+        $depend.='Makefile : $(VERSION_FROM)'.$/;
     }
     return $depend;
 
@@ -238,8 +246,20 @@ sub postamble {
         msg('using template: %s', basename($patch_fn));
         
 
-        #  Open it and slurp in
+        #  Generate a platform-safe target command and append the template
         #
+        my $constant_hr=\%{sprintf('%s::MM::Constant::Constant', ref($self))};
+        my $mm_prefix=$constant_hr->{'MM_PREFIX'} || mm_prefix(ref($self));
+        my $pm_macro="${mm_prefix}_PM";
+        my $argv_macro="${mm_prefix}_PM_ARGV";
+        my $target_macro="${mm_prefix}_PM_TARGET";
+        my $pm_target=$mm_or->oneliner(sprintf(
+            'my $method=shift(@ARGV); $(%s)->$method($(%s), @ARGV)',
+            $pm_macro,
+            $argv_macro
+        ));
+        $pm_target=~s/^\$\(ABSPERLRUN\)/\$\(PERLRUN\) -M\$\($pm_macro\)/;
+        $postamble.="$target_macro=$pm_target$/";
         $postamble.=slurp($patch_fn);
         
 
@@ -273,27 +293,33 @@ sub post_initialize {
     $mm_or->{'PM'}{'LICENSE'}='$(INST_LIBDIR)/$(BASEEXT)/LICENSE' if -e 'LICENSE';
     
     
-    #  Add git ref if needed
-    #
-    if (grep {$mm_or->{'VERSION_FROM'} eq $_} @{$mm_or->{'EXE_FILES'}}) {
-        push @{$mm_or->{'EXE_FILES'}}, $mm_or->{'VERSION_FROM'}.'.sha';
-    }
-    
-    
     #  Don't install docs/tmp files etc.
     #
-    my %pm=map { $_=>$mm_or->{'PM'}{$_} } grep { !/\.(?:md|xml|pod|bak|tmp|0)$/ } keys %{$mm_or->{'PM'}};
+    my %pm=map { $_=>$mm_or->{'PM'}{$_} } grep { !/\.(?:md|xml|pod|bak|tmp|new|old|ref|0|1)$/ } keys %{$mm_or->{'PM'}};
     $mm_or->{'PM'}=\%pm;
     
     
-    #  Update Git Ref in file if needed/available
+    #  Update and install Git ref if needed/available
     #
     my $devnull=File::Spec->devnull();
-    if (my $git_version=qx(git rev-parse --short HEAD 2>$devnull)) {
-        chomp $git_version;
-        require Tie::File;
-        tie my @lines, 'Tie::File', $mm_or->{'VERSION_FROM'} . '.sha' || die "error on Tie::File, $!";
-        $lines[0]=$git_version;
+    my $version_from_fn=$mm_or->{'VERSION_FROM'};
+    my $git_ref_fn=$version_from_fn && "${version_from_fn}.sha";
+    if ($version_from_fn && -f $version_from_fn &&
+        (my $git_version=qx(git rev-parse --short HEAD 2>$devnull)) && !$?) {
+        chomp($git_version);
+        tie(my @lines, 'Tie::File', $git_ref_fn) ||
+            die("error on Tie::File, $!");
+        @lines=($git_version)
+            unless @lines==1 && $lines[0] eq $git_version;
+    }
+    if ($git_ref_fn && -f $git_ref_fn) {
+        if ($mm_or->{'PM'}{$version_from_fn}) {
+            $mm_or->{'PM'}{$git_ref_fn}=$mm_or->{'PM'}{$version_from_fn}.'.sha';
+        }
+        elsif (grep {$version_from_fn eq $_} @{$mm_or->{'EXE_FILES'}}) {
+            (my $git_ref_base_fn=$git_ref_fn)=~s{^.*[/\\]}{};
+            $mm_or->{'PM'}{$git_ref_fn}='$(INST_SCRIPT)/'.$git_ref_base_fn;
+        }
     }
     
     #  Done
@@ -303,36 +329,28 @@ sub post_initialize {
 }
 
 
-sub init_main {
+#  Construct a default Makefile macro prefix from an extension class
+#
+sub mm_prefix {
 
-    #  Strip .pl, .sh extension from script files before installing
-    #
+    my $class=shift();
+    $class=~s/::/_/g;
+    return uc($class)
+
+}
+
+
+#  Not used yet
+#
+sub special_targets {
+
     my ($self, $mm_or, @param)=@_;
     (my $section = (caller(0))[3]) =~ s/^.*:://;
     msg("generating %s $section", ref($self));
 
-
-    #  Get original section
-    #
-    my $init_main=$self->{$section}($mm_or, @param);
-
-
-    #  Now fix files
-    #
-    my @fn;
-    foreach my $fn (@{$mm_or->{'EXE_FILES'}}) {
-        (my $fn_new=$fn)=~s/\.(?:pl|sh)$//;
-        if ($fn_new ne $fn) {
-            -f $fn_new || do { eval{symlink(abs_path($fn), $fn_new)} || copy(abs_path($fn), $fn_new) }
-        }
-        push @fn, $fn_new;
-    }
-    $mm_or->{'EXE_FILES'}=\@fn;
-    
-    
-    #  And return
-    #
-    return $init_main;
+    my $special_targets=$self->{$section}($mm_or, @param);
+    $special_targets=~s/\.PHONY:\s+(.*)/\.PHONY: $1 cpanfile/m;
+    return $special_targets;
 
 }
 
@@ -342,209 +360,161 @@ __END__
 
 =begin markdown
 
-# ExtUtils::Markdown::Pod::Import
+# NAME
 
-## Name
+ExtUtils::Markdown::Pod::MM::Import - install the MakeMaker lifecycle hooks
 
-ExtUtils::Markdown::Pod::Import - import-time MakeMaker section hook manager
+# DESCRIPTION
 
-## Synopsis
+This module contains the import-time boundary between
+`ExtUtils::Markdown::Pod` and `ExtUtils::MakeMaker`. While `Makefile.PL` is
+running, it wraps the active `const_config`, `depend`, `postamble`, and
+`post_initialize` implementations. Each wrapper calls the existing platform
+implementation before applying the distribution behavior.
 
-```perl
-use ExtUtils::Markdown::Pod qw(const_config postamble);
-```
+The hooks:
 
-Usually this module is not used directly. It is invoked by
-`ExtUtils::Markdown::Pod`.
+- publish the target constants as Makefile macros;
+- retain the active local library paths and loaded MakeMaker extensions in the
+  global `PERLRUN` command;
+- add license metadata when both `LICENSE` and `AUTHOR` are supplied, and
+  retain the default distribution target;
+- make the generated Makefile depend on `VERSION_FROM` when needed;
+- add the `doc` and `readme` targets;
+- install `LICENSE`, exclude documentation and temporary sources from the
+  install map, and record the Git revision beside `VERSION_FROM`.
 
-## Description
+Markdown selection, conversion, and Perl source updates are not implemented in
+this module. Those operations belong to `Markdown::Pod::Embed` and are invoked
+by the target methods in `ExtUtils::Markdown::Pod::MM`.
 
-`ExtUtils::Markdown::Pod::Import` installs the MakeMaker hooks requested by the
-caller. For each requested MakeMaker section, it finds and stores the original
-implementation, then replaces the corresponding `ExtUtils::MM::*` method with
-a wrapper that calls this distribution's implementation.
+# IMPORT
 
-For example, requesting `postamble` causes calls to
-`ExtUtils::MM::postamble` to be routed to:
-
-```perl
-ExtUtils::Markdown::Pod::MM::postamble(...)
-```
-
-The original MakeMaker method is saved in the hook object's internal hash so
-the replacement can call it and append or modify the result.
-
-## Import Behavior
-
-```perl
-ExtUtils::Markdown::Pod::Import->import(@sections);
-```
-
-The import process:
-
-1. Requires `ExtUtils::MakeMaker`.
-2. Builds a list of active `ExtUtils::MM::*` classes from `@ExtUtils::MM::ISA`.
-3. For each requested section, locates the original implementation.
-4. Stores the original code reference.
-5. Replaces `ExtUtils::MM::$section` with a wrapper method.
-
-The wrapper dispatches to:
-
-```perl
-<importing class>::MM::<section>
-```
-
-For this distribution, that normally means `ExtUtils::Markdown::Pod::MM`.
-
-## Usage Conventions
-
-This module is part of the import mechanism and is normally loaded indirectly.
-Callers should prefer:
+Ordinary use needs no import arguments:
 
 ```perl
 use ExtUtils::Markdown::Pod;
 ```
 
-or:
+Import is ignored unless the running program is `Makefile.PL`. Repeated imports
+in the same process do not install multiple wrappers.
 
-```perl
-use ExtUtils::Markdown::Pod qw(const_config postamble);
-```
+# SEE ALSO
 
-Because it modifies `ExtUtils::MM` symbol table entries, it should be used only
-during Makefile generation.
+`ExtUtils::Markdown::Pod`, `ExtUtils::Markdown::Pod::MM`,
+`ExtUtils::MakeMaker`
 
-## Diagnostics
+# AUTHOR
 
-The module emits formatted status messages through
-`ExtUtils::Markdown::Pod::Util::msg`. It dies if no `ExtUtils::MM` inheritance
-chain can be found.
+Andrew Speer <andrew.speer@isolutions.com.au>
 
-## See Also
+# LICENSE AND COPYRIGHT
 
-- `ExtUtils::Markdown::Pod`
-- `ExtUtils::Markdown::Pod::MM`
-- `ExtUtils::MakeMaker`
+This file is part of ExtUtils::Markdown::Pod.
 
+This software is copyright (c) 2026 by Andrew Speer
+<andrew.speer@isolutions.com.au>.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+Full license text is available at:
+
+<http://dev.perl.org/licenses/>
 
 =end markdown
 
 
-=head1 ExtUtils::Markdown::Pod::Import
+=head1 NAME
+
+ExtUtils::Markdown::Pod::MM::Import - install the MakeMaker lifecycle hooks
 
 
-=head2 Name
+=head1 DESCRIPTION
 
-ExtUtils::Markdown::Pod::Import - import-time MakeMaker section hook manager
+This module contains the import-time boundary between
+C<ExtUtils::Markdown::Pod> and C<ExtUtils::MakeMaker>. While C<Makefile.PL> is
+running, it wraps the active C<const_config>, C<depend>, C<postamble>, and
+C<post_initialize> implementations. Each wrapper calls the existing platform
+implementation before applying the distribution behavior.
 
-
-=head2 Synopsis
-
-
- use ExtUtils::Markdown::Pod qw(const_config postamble);
-Usually this module is not used directly. It is invoked by
-C<ExtUtils::Markdown::Pod>.
-
-
-=head2 Description
-
-C<ExtUtils::Markdown::Pod::Import> installs the MakeMaker hooks requested by the
-caller. For each requested MakeMaker section, it finds and stores the original
-implementation, then replaces the corresponding C<ExtUtils::MM::*> method with
-a wrapper that calls this distribution's implementation.
-
-For example, requesting C<postamble> causes calls to
-C<ExtUtils::MM::postamble> to be routed to:
-
-
- ExtUtils::Markdown::Pod::MM::postamble(...)
-The original MakeMaker method is saved in the hook object's internal hash so
-the replacement can call it and append or modify the result.
-
-
-=head2 Import Behavior
-
-
- ExtUtils::Markdown::Pod::Import->import(@sections);
-The import process:
+The hooks:
 
 =over
 
-=item 1.
+=item -
 
-Requires C<ExtUtils::MakeMaker>.
-
-
-=item 2.
-
-Builds a list of active C<ExtUtils::MM::*> classes from C<@ExtUtils::MM::ISA>.
+publish the target constants as Makefile macros;
 
 
-=item 3.
+=item -
 
-For each requested section, locates the original implementation.
-
-
-=item 4.
-
-Stores the original code reference.
+retain the active local library paths and loaded MakeMaker extensions in the
+  global C<PERLRUN> command;
 
 
-=item 5.
+=item -
 
-Replaces C<ExtUtils::MM::$section> with a wrapper method.
+add license metadata when both C<LICENSE> and C<AUTHOR> are supplied, and
+  retain the default distribution target;
+
+
+=item -
+
+make the generated Makefile depend on C<VERSION_FROM> when needed;
+
+
+=item -
+
+add the C<doc> and C<readme> targets;
+
+
+=item -
+
+install C<LICENSE>, exclude documentation and temporary sources from the
+  install map, and record the Git revision beside C<VERSION_FROM>.
 
 
 =back
 
-The wrapper dispatches to:
+Markdown selection, conversion, and Perl source updates are not implemented in
+this module. Those operations belong to C<Markdown::Pod::Embed> and are invoked
+by the target methods in C<ExtUtils::Markdown::Pod::MM>.
 
 
- <importing class>::MM::<section>
-For this distribution, that normally means C<ExtUtils::Markdown::Pod::MM>.
+=head1 IMPORT
 
-
-=head2 Usage Conventions
-
-This module is part of the import mechanism and is normally loaded indirectly.
-Callers should prefer:
+Ordinary use needs no import arguments:
 
 
  use ExtUtils::Markdown::Pod;
-or:
+Import is ignored unless the running program is C<Makefile.PL>. Repeated imports
+in the same process do not install multiple wrappers.
 
 
- use ExtUtils::Markdown::Pod qw(const_config postamble);
-Because it modifies C<ExtUtils::MM> symbol table entries, it should be used only
-during Makefile generation.
+=head1 SEE ALSO
 
-
-=head2 Diagnostics
-
-The module emits formatted status messages through
-C<ExtUtils::Markdown::Pod::Util::msg>. It dies if no C<ExtUtils::MM> inheritance
-chain can be found.
-
-
-=head2 See Also
-
-=over
-
-=item -
-
-C<ExtUtils::Markdown::Pod>
-
-
-=item -
-
-C<ExtUtils::Markdown::Pod::MM>
-
-
-=item -
-
+C<ExtUtils::Markdown::Pod>, C<ExtUtils::Markdown::Pod::MM>,
 C<ExtUtils::MakeMaker>
 
 
-=back
+=head1 AUTHOR
+
+Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
+
+
+=head1 LICENSE AND COPYRIGHT
+
+This file is part of ExtUtils::Markdown::Pod.
+
+This software is copyright (c) 2026 by Andrew Speer
+L<mailto:andrew.speer@isolutions.com.au>.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+Full license text is available at:
+
+L<http://dev.perl.org/licenses/>
 
 =cut

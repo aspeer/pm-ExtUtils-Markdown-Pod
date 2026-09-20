@@ -33,7 +33,28 @@ my $changed = $markpod->markpod_process_and_update('lib/My/Module.pm');
 ```
 
 The MakeMaker import hook adds `doc` and `readme` targets to the generated
-Makefile.
+Makefile. It also retains the project's established MakeMaker configuration,
+dependency, metadata, provenance, and install-map behavior.
+
+The same complete integration can be enabled optionally inside `Makefile.PL`:
+
+```perl
+use ExtUtils::MakeMaker;
+
+eval {
+    require ExtUtils::Markdown::Pod;
+    ExtUtils::Markdown::Pod->import();
+    1;
+};
+
+WriteMakefile(
+    NAME         => 'Example',
+    VERSION_FROM => 'lib/Example.pm',
+);
+```
+
+The import must run before `WriteMakefile`. If the module cannot be loaded, the
+silent `eval` leaves the ordinary MakeMaker configuration in place.
 
 # DESCRIPTION
 
@@ -42,8 +63,8 @@ still embedding generated POD in Perl modules and scripts. The Markdown source
 can live in a sidecar file such as `lib/My/Module.pm.md`, or inside a POD block
 marked with `=begin markdown` and `=end markdown`.
 
-When a file is processed, the module converts the Markdown to POD using
-`Markdown::Pod`, then writes a merged documentation block back to the Perl file.
+When a file is processed, `Markdown::Pod::Embed` converts the Markdown to POD
+and writes a merged documentation block back to the Perl file.
 The merged block keeps the original Markdown and appends the generated POD, so
 the Markdown remains editable while tools such as `perldoc`, `pod2man`,
 `ABSTRACT_FROM`, and CPAN indexers can consume normal POD.
@@ -62,8 +83,17 @@ For example, `lib/My/Module.pm.md` is the source for
 
 # MAKE TARGETS
 
-The MakeMaker integration lives in `ExtUtils::Markdown::Pod::MM` and is loaded
-automatically when `ExtUtils::Markdown::Pod` is imported by `Makefile.PL`.
+The MakeMaker integration is deliberately separate from Markdown processing:
+
+- `ExtUtils::Markdown::Pod::MM::Import` installs and implements the MakeMaker
+  lifecycle hooks.
+- `ExtUtils::Markdown::Pod::MM` defines and runs the `doc` and `readme` targets.
+- `Markdown::Pod::Embed` selects Markdown, converts it to POD, and updates the
+  Perl source.
+
+The integration is loaded automatically when `ExtUtils::Markdown::Pod` is
+imported by `Makefile.PL`. It preserves local library paths and the active
+MakeMaker extensions in the generated global `PERLRUN` command.
 
 `make doc`
 : Processes Markdown sidecars listed in `MANIFEST` and merges them into their
@@ -71,8 +101,10 @@ automatically when `ExtUtils::Markdown::Pod` is imported by `Makefile.PL`.
   ignored so test fixtures are not rewritten by documentation builds.
 
 `make readme`
-: Builds `README` from `README.md`, from the `VERSION_FROM` sidecar, or from
-  embedded Markdown in the `VERSION_FROM` file.
+: Builds `README` from an existing `README.md`. When neither README file exists,
+  it first creates a regular `README.md` from sidecar or embedded Markdown in
+  the `VERSION_FROM` file. An existing plain `README` without `README.md` is
+  left unchanged, and no file is created when `VERSION_FROM` has no Markdown.
 
 Status output is written to STDERR. Normal output is intentionally compact:
 
@@ -133,10 +165,12 @@ those files. Running `make readme` regenerates `README`.
 
 # DEPENDENCIES
 
-The core conversion path requires `Markdown::Pod` and `PPI`.
+The conversion implementation is supplied by `Markdown::Pod::Embed`. The
+`ExtUtils::Markdown::Pod` class retains the processing methods as a compatibility
+facade, while new conversion-only code can use `Markdown::Pod::Embed` directly.
 
-README generation uses `pandoc` through `IPC::Run3`. If `pandoc` is not
-available, README generation will fail and the README-specific test is skipped.
+README generation uses `pandoc`. If `pandoc` is not available, README generation
+will fail and the README-specific test is skipped.
 
 # AUTHOR
 

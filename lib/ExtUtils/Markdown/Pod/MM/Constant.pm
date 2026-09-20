@@ -43,8 +43,10 @@ my $local_fn=abs_path(__FILE__) . '.local';
 #
 %Constant=(
 
+    MM_PREFIX => 'MARKPOD',
+
     TEMPLATE_POSTAMBLE_FN =>
-        File::Spec->catfile(dirname(__FILE__), 'postamble.inc'),
+        File::Spec->catfile(dirname(abs_path(__FILE__)), 'postamble.inc'),
         
     MARKPOD_PM => 'ExtUtils::Markdown::Pod::MM',
     
@@ -105,6 +107,10 @@ my $argv      = $MM_ARGV;
 
 `ExtUtils::Markdown::Pod::MM::Constant` defines constants used by
 `ExtUtils::Markdown::Pod::MM` when it extends `ExtUtils::MakeMaker`.
+
+`MM_PREFIX` selects the private `MARKPOD_*` Makefile macro namespace used by
+the shared hook implementation. It is hook configuration and is not emitted as
+a generic `MM_PREFIX` Makefile macro.
 
 The constants describe where the Makefile postamble template lives, which Perl
 module should be invoked by the generated targets, and which MakeMaker
@@ -169,7 +175,7 @@ ExtUtils::Markdown::Pod::MM::Constant - constants for MakeMaker integration
 
 
  use ExtUtils::Markdown::Pod::MM::Constant;
- 
+
  my $postamble = $TEMPLATE_POSTAMBLE_FN;
  my $module    = $MM_PM;
  my $argv      = $MM_ARGV;
@@ -178,6 +184,10 @@ ExtUtils::Markdown::Pod::MM::Constant - constants for MakeMaker integration
 
 C<ExtUtils::Markdown::Pod::MM::Constant> defines constants used by
 C<ExtUtils::Markdown::Pod::MM> when it extends C<ExtUtils::MakeMaker>.
+
+C<MM_PREFIX> selects the private C<MARKPOD_*> Makefile macro namespace used by
+the shared hook implementation. It is hook configuration and is not emitted as
+a generic C<MM_PREFIX> Makefile macro.
 
 The constants describe where the Makefile postamble template lives, which Perl
 module should be invoked by the generated targets, and which MakeMaker
