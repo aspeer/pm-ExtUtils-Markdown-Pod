@@ -38,6 +38,6 @@
 
 # Local generated development files.
 ^bin/markpod$
-^lib/ExtUtils/Markdown/Pod\.pm\.sha$
+^lib/ASPEER/MakeMaker/Markdown/Pod\.pm\.sha$
 ^a$
 ^foo/

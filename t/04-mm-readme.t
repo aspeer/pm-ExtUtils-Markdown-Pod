@@ -9,8 +9,8 @@ use File::Path qw(make_path);
 use File::Temp qw(tempdir);
 use Test::More;
 
-use ExtUtils::Markdown::Pod::Constant;
-use ExtUtils::Markdown::Pod::MM;
+use ASPEER::MakeMaker::Markdown::Pod::Constant;
+use ASPEER::MakeMaker::Markdown::Pod::MM;
 
 plan skip_all => 'pandoc is required for README generation tests'
     unless $PANDOC_EXE;
@@ -41,7 +41,7 @@ sub spew {
 sub run_readme {
 
     my ($version_from)=@_;
-    return ExtUtils::Markdown::Pod::MM::readme(
+    return ASPEER::MakeMaker::Markdown::Pod::MM::readme(
         undef,
         '',
         '',

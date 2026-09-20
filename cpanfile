@@ -1,3 +1,4 @@
+requires 'ASPEER::MakeMaker', '1.005';
 requires 'Cwd';
 requires 'Carp';
 requires 'Data::Dumper';
@@ -13,8 +14,6 @@ requires 'Getopt::Long';
 requires 'IO::File';
 requires 'Markdown::Pod::Embed', '0.010';
 requires 'Pod::Usage';
-requires 'Software::LicenseUtils';
-requires 'Tie::File';
 requires 'base';
 requires 'constant';
 requires 'strict';
@@ -24,7 +23,6 @@ requires 'warnings';
 on configure => sub {
     requires 'perl', '5.008';
     requires 'ExtUtils::MakeMaker';
-    requires 'Tie::File';
     requires 'version';
 };
 

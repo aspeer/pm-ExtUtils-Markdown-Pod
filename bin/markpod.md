@@ -30,7 +30,7 @@ markpod.pl lib/My/Module.pm
 
 # DESCRIPTION
 
-`markpod.pl` is the command-line interface for `ExtUtils::Markdown::Pod`. It
+`markpod.pl` is the command-line interface for `ASPEER::MakeMaker::Markdown::Pod`. It
 processes Perl modules and scripts, finds Markdown documentation, converts that
 Markdown to POD, and writes a merged documentation block back into the source.
 
@@ -133,7 +133,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE and COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 

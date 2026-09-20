@@ -11,7 +11,7 @@ use File::Temp qw(tempdir);
 use Test::More;
 
 use Markdown::Pod::Embed;
-use ExtUtils::Markdown::Pod::MM;
+use ASPEER::MakeMaker::Markdown::Pod::MM;
 
 
 #  Read and write test fixture files
@@ -43,6 +43,8 @@ sub blurp {
 #
 my $cwd=getcwd();
 my $extutils_lib_dn=abs_path('lib');
+my $common_pm_fn=abs_path($INC{'ASPEER/MakeMaker/MM.pm'});
+$common_pm_fn=~s{[/\\]ASPEER[/\\]MakeMaker[/\\]MM\.pm$}{};
 my $embed_pm_fn=abs_path($INC{'Markdown/Pod/Embed.pm'});
 $embed_pm_fn=~s{[/\\]Markdown[/\\]Pod[/\\]Embed\.pm$}{};
 my $temporary_dn=tempdir(CLEANUP => 1);
@@ -94,12 +96,12 @@ if (system('git', 'init', '-q')==0) {
 local $ENV{'PERL5LIB'}=join(
     $Config{'path_sep'},
     grep {defined($_) && length($_)}
-        ($extutils_lib_dn, $embed_pm_fn, $ENV{'PERL5LIB'})
+        ($extutils_lib_dn, $common_pm_fn, $embed_pm_fn, $ENV{'PERL5LIB'})
 );
-is(system($^X, "-I$local_lib_dn", '-MExtUtils::Markdown::Pod', 'Makefile.PL'), 0,
+is(system($^X, "-I$local_lib_dn", '-MASPEER::MakeMaker::Markdown::Pod', 'Makefile.PL'), 0,
     'Makefile.PL succeeds with command-line import');
 my $makefile=slurp('Makefile');
-like($makefile, qr/^PERLRUN\s*=.*-MExtUtils::Markdown::Pod/m,
+like($makefile, qr/^PERLRUN\s*=.*-MASPEER::MakeMaker::Markdown::Pod/m,
     'global PERLRUN reloads the MakeMaker integration');
 like($makefile, qr/^PERLRUN\s*=.*-MExtUtils::MakeMaker/m,
     'global PERLRUN retains loaded MakeMaker modules');
@@ -152,8 +154,8 @@ like(slurp('lib/Sample.pm'), qr/^=head1 NAME$/m,
 #
 my $embedded_import=<<'EMBEDDED_IMPORT';
 eval {
-    require ExtUtils::Markdown::Pod;
-    ExtUtils::Markdown::Pod->import();
+    require ASPEER::MakeMaker::Markdown::Pod;
+    ASPEER::MakeMaker::Markdown::Pod->import();
     1;
 };
 
@@ -166,7 +168,7 @@ blurp('Makefile.PL', $makefile_pl);
 is(system($^X, 'Makefile.PL'), 0,
     'Makefile.PL succeeds with embedded optional import');
 $makefile=slurp('Makefile');
-like($makefile, qr/^PERLRUN\s*=.*-MExtUtils::Markdown::Pod/m,
+like($makefile, qr/^PERLRUN\s*=.*-MASPEER::MakeMaker::Markdown::Pod/m,
     'embedded import installs the full integration');
 my @doc_target=($makefile=~/^doc :: readme$/mg);
 is(scalar(@doc_target), 1, 'embedded import generates one doc target');
@@ -181,7 +183,7 @@ else {
 
 #  Command-line and embedded activation together remain idempotent
 #
-is(system($^X, '-MExtUtils::Markdown::Pod', 'Makefile.PL'), 0,
+is(system($^X, '-MASPEER::MakeMaker::Markdown::Pod', 'Makefile.PL'), 0,
     'combined command-line and embedded activation succeeds');
 $makefile=slurp('Makefile');
 @doc_target=($makefile=~/^doc :: readme$/mg);
@@ -202,7 +204,7 @@ WriteMakefile(
     AUTHOR       => 'Andrew Speer',
 );
 MAKEFILE_PL
-is(system($^X, '-MExtUtils::Markdown::Pod', 'Makefile.PL'), 0,
+is(system($^X, '-MASPEER::MakeMaker::Markdown::Pod', 'Makefile.PL'), 0,
     'Makefile.PL succeeds with executable VERSION_FROM');
 $makefile=slurp('Makefile');
 like($makefile, qr/^EXE_FILES\s*=\s*bin\/sample\.pl$/m,
@@ -239,7 +241,7 @@ WriteMakefile(
     AUTHOR  => 'Andrew Speer',
 );
 MAKEFILE_PL
-is(system($^X, '-MExtUtils::Markdown::Pod', 'Makefile.PL'), 0,
+is(system($^X, '-MASPEER::MakeMaker::Markdown::Pod', 'Makefile.PL'), 0,
     'Makefile.PL succeeds without VERSION_FROM');
 ok(!-e '.sha', 'Git-SHA provenance is not created without VERSION_FROM');
 
@@ -255,7 +257,7 @@ WriteMakefile(
     VERSION_FROM => 'lib/Sample.pm',
 );
 MAKEFILE_PL
-is(system($^X, '-MExtUtils::Markdown::Pod', 'Makefile.PL'), 0,
+is(system($^X, '-MASPEER::MakeMaker::Markdown::Pod', 'Makefile.PL'), 0,
     'minimal Makefile.PL succeeds without LICENSE or AUTHOR');
 $makefile=slurp('Makefile');
 like($makefile, qr/^doc :: readme$/m,
@@ -270,7 +272,7 @@ chdir($cwd) || die "unable to chdir $cwd, $!";
     no warnings qw(redefine);
     local *IO::File::new=sub {bless({}, 'Local::FailingWrite')};
     my $write_ok=eval {
-        ExtUtils::Markdown::Pod::MM::Util::blurp('ignored', 'text');
+        ASPEER::MakeMaker::MM::Util::blurp('ignored', 'text');
         1;
     };
     ok(!$write_ok, 'file write failure is fatal');
@@ -279,7 +281,7 @@ chdir($cwd) || die "unable to chdir $cwd, $!";
     no warnings qw(redefine);
     local *IO::File::new=sub {bless({}, 'Local::FailingClose')};
     my $close_ok=eval {
-        ExtUtils::Markdown::Pod::MM::Util::blurp('ignored', 'text');
+        ASPEER::MakeMaker::MM::Util::blurp('ignored', 'text');
         1;
     };
     ok(!$close_ok, 'file close failure is fatal');

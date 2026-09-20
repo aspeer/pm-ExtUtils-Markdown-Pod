@@ -3,8 +3,8 @@
 The latest version of this software is always available from Github
 
 ```
-git clone https://github.com/aspeer/pm-ExtUtils-Markdown-Pod
-cd pm-ExtUtils-Markdown-Pod
+git clone https://github.com/aspeer/pm-ASPEER-MakeMaker-Markdown-Pod
+cd pm-ASPEER-MakeMaker-Markdown-Pod
 ```
 
 If on a modern system:

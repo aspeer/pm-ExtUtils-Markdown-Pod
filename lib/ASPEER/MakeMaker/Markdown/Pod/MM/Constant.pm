@@ -1,5 +1,5 @@
 #
-#  This file is part of ExtUtils::Markdown::Pod.
+#  This file is part of ASPEER::MakeMaker::Markdown::Pod.
 #
 #  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
@@ -16,7 +16,7 @@
 
 #  Pragma
 #
-package ExtUtils::Markdown::Pod::MM::Constant;
+package ASPEER::MakeMaker::Markdown::Pod::MM::Constant;
 use strict qw(vars);
 use warnings;
 use vars qw($VERSION @ISA %EXPORT_TAGS @EXPORT_OK @EXPORT %Constant);
@@ -48,7 +48,7 @@ my $local_fn=abs_path(__FILE__) . '.local';
     TEMPLATE_POSTAMBLE_FN =>
         File::Spec->catfile(dirname(abs_path(__FILE__)), 'postamble.inc'),
         
-    MARKPOD_PM => 'ExtUtils::Markdown::Pod::MM',
+    MARKPOD_PM => 'ASPEER::MakeMaker::Markdown::Pod::MM',
     
     MARKPOD_PM_ARGV => join(',', qw[
         "$(NAME)"
@@ -80,33 +80,35 @@ my $local_fn=abs_path(__FILE__) . '.local';
 #
 require Exporter;
 @ISA=qw(Exporter);
-foreach (keys %Constant) {${$_}=$Constant{$_}}
+{
+    no warnings qw(once);
+    foreach (keys %Constant) {${$_}=$Constant{$_}}
+}
 @EXPORT=map {'$' . $_} keys %Constant;
 @EXPORT_OK=@EXPORT;
 %EXPORT_TAGS=(all => [@EXPORT_OK]);
-$_=\%Constant;
 __END__
 
 =begin markdown
 
 # NAME
 
-ExtUtils::Markdown::Pod::MM::Constant - constants for MakeMaker integration
+ASPEER::MakeMaker::Markdown::Pod::MM::Constant - constants for MakeMaker integration
 
 # SYNOPSIS
 
 ```perl
-use ExtUtils::Markdown::Pod::MM::Constant;
+use ASPEER::MakeMaker::Markdown::Pod::MM::Constant;
 
 my $postamble = $TEMPLATE_POSTAMBLE_FN;
-my $module    = $MM_PM;
-my $argv      = $MM_ARGV;
+my $module    = $MARKPOD_PM;
+my $argv      = $MARKPOD_PM_ARGV;
 ```
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod::MM::Constant` defines constants used by
-`ExtUtils::Markdown::Pod::MM` when it extends `ExtUtils::MakeMaker`.
+`ASPEER::MakeMaker::Markdown::Pod::MM::Constant` defines constants used by
+`ASPEER::MakeMaker::Markdown::Pod::MM` when it extends `ExtUtils::MakeMaker`.
 
 `MM_PREFIX` selects the private `MARKPOD_*` Makefile macro namespace used by
 the shared hook implementation. It is hook configuration and is not emitted as
@@ -121,11 +123,11 @@ variables should be passed back into the target dispatcher.
 `$TEMPLATE_POSTAMBLE_FN`
 : Path to the bundled `postamble.inc` template.
 
-`$MM_PM`
+`$MARKPOD_PM`
 : Module name invoked by the generated Makefile targets. This is normally
-  `ExtUtils::Markdown::Pod::MM`.
+  `ASPEER::MakeMaker::Markdown::Pod::MM`.
 
-`$MM_ARGV`
+`$MARKPOD_PM_ARGV`
 : Quoted list of MakeMaker variables passed to the target dispatcher so methods
   such as `doc` and `readme` can reconstruct their input parameters.
 
@@ -134,8 +136,8 @@ variables should be passed back into the target dispatcher.
 Local constants can be overridden by files loaded from:
 
 ```text
-lib/ExtUtils/Markdown/Pod/MM/Constant.pm.local
-~/.ExtUtils::Markdown::Pod::MM::Constant.local
+lib/ASPEER/MakeMaker/Markdown/Pod/MM/Constant.pm.local
+~/.ASPEER::MakeMaker::Markdown::Pod::MM::Constant.local
 ```
 
 Those files are expected to return a hash reference suitable for merging into
@@ -143,7 +145,7 @@ Those files are expected to return a hash reference suitable for merging into
 
 # SEE ALSO
 
-`ExtUtils::Markdown::Pod::MM`, `ExtUtils::MakeMaker`
+`ASPEER::MakeMaker::Markdown::Pod::MM`, `ExtUtils::MakeMaker`
 
 # AUTHOR
 
@@ -151,7 +153,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.
@@ -168,22 +170,22 @@ Full license text is available at:
 
 =head1 NAME
 
-ExtUtils::Markdown::Pod::MM::Constant - constants for MakeMaker integration
+ASPEER::MakeMaker::Markdown::Pod::MM::Constant - constants for MakeMaker integration
 
 
 =head1 SYNOPSIS
 
 
- use ExtUtils::Markdown::Pod::MM::Constant;
+ use ASPEER::MakeMaker::Markdown::Pod::MM::Constant;
 
  my $postamble = $TEMPLATE_POSTAMBLE_FN;
- my $module    = $MM_PM;
- my $argv      = $MM_ARGV;
+ my $module    = $MARKPOD_PM;
+ my $argv      = $MARKPOD_PM_ARGV;
 
 =head1 DESCRIPTION
 
-C<ExtUtils::Markdown::Pod::MM::Constant> defines constants used by
-C<ExtUtils::Markdown::Pod::MM> when it extends C<ExtUtils::MakeMaker>.
+C<ASPEER::MakeMaker::Markdown::Pod::MM::Constant> defines constants used by
+C<ASPEER::MakeMaker::Markdown::Pod::MM> when it extends C<ExtUtils::MakeMaker>.
 
 C<MM_PREFIX> selects the private C<MARKPOD_*> Makefile macro namespace used by
 the shared hook implementation. It is hook configuration and is not emitted as
@@ -199,11 +201,11 @@ variables should be passed back into the target dispatcher.
 C<$TEMPLATE_POSTAMBLE_FN>
 : Path to the bundled C<postamble.inc> template.
 
-C<$MM_PM>
+C<$MARKPOD_PM>
 : Module name invoked by the generated Makefile targets. This is normally
-  C<ExtUtils::Markdown::Pod::MM>.
+  C<ASPEER::MakeMaker::Markdown::Pod::MM>.
 
-C<$MM_ARGV>
+C<$MARKPOD_PM_ARGV>
 : Quoted list of MakeMaker variables passed to the target dispatcher so methods
   such as C<doc> and C<readme> can reconstruct their input parameters.
 
@@ -213,15 +215,15 @@ C<$MM_ARGV>
 Local constants can be overridden by files loaded from:
 
 
- lib/ExtUtils/Markdown/Pod/MM/Constant.pm.local
- ~/.ExtUtils::Markdown::Pod::MM::Constant.local
+ lib/ASPEER/MakeMaker/Markdown/Pod/MM/Constant.pm.local
+ ~/.ASPEER::MakeMaker::Markdown::Pod::MM::Constant.local
 Those files are expected to return a hash reference suitable for merging into
 C<%Constant>.
 
 
 =head1 SEE ALSO
 
-C<ExtUtils::Markdown::Pod::MM>, C<ExtUtils::MakeMaker>
+C<ASPEER::MakeMaker::Markdown::Pod::MM>, C<ExtUtils::MakeMaker>
 
 
 =head1 AUTHOR
@@ -231,7 +233,7 @@ Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
 
 =head1 LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 L<mailto:andrew.speer@isolutions.com.au>.

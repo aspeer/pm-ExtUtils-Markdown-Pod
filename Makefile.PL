@@ -3,15 +3,15 @@ use strict;
 use warnings;
 use version;
 
-use Tie::File;
 use ExtUtils::MakeMaker;
 
 
-#  Bring in helper MakeMaker modules if available, non-fatal if not
+#  Bring in this MakeMaker plugin and optional Git helpers when available
 #
 eval {
-    # Utiltity sync targets
-    #require Local::ExtUtils::Common; Local::ExtUtils::Common->import(); 1 
+    require ASPEER::MakeMaker::Markdown::Pod;
+    ASPEER::MakeMaker::Markdown::Pod->import();
+    1
 };
 eval {
     # Git utilities
@@ -27,15 +27,16 @@ if ($mm_ver =~ /_/) { # dev version
     die $@ if $@;
 }
 my %WriteMakefile=(
-    NAME                => 'ExtUtils::Markdown::Pod',
-    DISTNAME            => 'ExtUtils-Markdown-Pod',
-    VERSION_FROM        => 'lib/ExtUtils/Markdown/Pod.pm',
-    ABSTRACT_FROM       => 'lib/ExtUtils/Markdown/Pod.pm',
+    NAME                => 'ASPEER::MakeMaker::Markdown::Pod',
+    DISTNAME            => 'ASPEER-MakeMaker-Markdown-Pod',
+    VERSION_FROM        => 'lib/ASPEER/MakeMaker/Markdown/Pod.pm',
+    ABSTRACT_FROM       => 'lib/ASPEER/MakeMaker/Markdown/Pod.pm',
     EXE_FILES           => ['bin/markpod'],
     LICENSE             => 'perl',
     AUTHOR              => 'Andrew Speer <andrew.speer@isolutions.com.au>',
     MIN_PERL_VERSION	=> '5.008',
     PREREQ_PM           =>  {
+        'ASPEER::MakeMaker'     =>  '1.005',
         'Cwd'                   =>  0,
         'Carp'                  =>  0,
         'Data::Dumper'          =>  0,
@@ -51,8 +52,6 @@ my %WriteMakefile=(
         'IO::File'              =>  0,
         'Markdown::Pod::Embed'  =>  '0.010',
         'Pod::Usage'            =>  0,
-        'Software::LicenseUtils'=>  0,
-        'Tie::File'             =>  0,
         'base'                  =>  0,
         'constant'              =>  0,
         'strict'                =>  0,
@@ -61,7 +60,6 @@ my %WriteMakefile=(
     },
     CONFIGURE_REQUIRES  =>  {
         'ExtUtils::MakeMaker'   =>  0,
-        'Tie::File'             =>  0,
         'version'               =>  0,
     },
     TEST_REQUIRES       =>  {
@@ -74,11 +72,11 @@ my %WriteMakefile=(
             version     => 2
         },
         resources       => {
-            homepage    => 'https://github.com/aspeer/pl-markpod',
+            homepage    => 'https://gitea.isolutions.com.au/aspeer/pm-ASPEER-MakeMaker-Markdown-Pod',
             repository  => {
                 type    => 'git',
-                url     => 'https://github.com/aspeer/pl-markpod.git',
-                web     => 'https://github.com/aspeer/pl-markpod'
+                url     => 'https://gitea.isolutions.com.au/aspeer/pm-ASPEER-MakeMaker-Markdown-Pod.git',
+                web     => 'https://gitea.isolutions.com.au/aspeer/pm-ASPEER-MakeMaker-Markdown-Pod'
             }
         }
     },
@@ -105,49 +103,3 @@ while (my($mm_ver_test, $ar)=each %MM_Compat) {
     }
 }
 WriteMakefile(%WriteMakefile);
-
-
-#  Extend Makefile targets
-#
-sub MY::post_initialize {
-
-    #  Add license file, other support files here
-    #
-    my $mm_or=shift();
-    $mm_or->{'PM'}{'LICENSE'}='$(INST_LIBDIR)/$(BASEEXT)/LICENSE' if -e 'LICENSE';
-
-
-    #  Don't install docs/tmp files etc.
-    #
-    my %pm=map { $_=>$mm_or->{'PM'}{$_} } grep { !/\.(?:md|xml|pod|bak|tmp|new|old|ref|0|1)$/ } keys %{$mm_or->{'PM'}};
-    $mm_or->{'PM'}=\%pm;
-    
-
-    #  Update and install Git ref if needed/available
-    #
-    my $devnull=File::Spec->devnull();
-    my $version_from_fn=$mm_or->{'VERSION_FROM'};
-    my $git_ref_fn=$version_from_fn && "${version_from_fn}.sha";
-    if ($version_from_fn && -f $version_from_fn &&
-        (my $git_version=qx(git rev-parse --short HEAD 2>$devnull)) && !$?) {
-        chomp($git_version);
-        tie(my @lines, 'Tie::File', $git_ref_fn) ||
-            die("error on Tie::File, $!");
-        @lines=($git_version)
-            unless @lines==1 && $lines[0] eq $git_version;
-    }
-    if ($git_ref_fn && -f $git_ref_fn) {
-        if ($mm_or->{'PM'}{$version_from_fn}) {
-            $mm_or->{'PM'}{$git_ref_fn}=$mm_or->{'PM'}{$version_from_fn}.'.sha';
-        }
-        elsif (grep {$version_from_fn eq $_} @{$mm_or->{'EXE_FILES'}}) {
-            (my $git_ref_base_fn=$git_ref_fn)=~s{^.*[/\\]}{};
-            $mm_or->{'PM'}{$git_ref_fn}='$(INST_SCRIPT)/'.$git_ref_base_fn;
-        }
-    }
-
-    #  And continue
-    #
-    $mm_or->MY::SUPER::post_initialize;
-
-}

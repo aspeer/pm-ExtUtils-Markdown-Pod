@@ -1,5 +1,5 @@
 #
-#  This file is part of ExtUtils::Markdown::Pod.
+#  This file is part of ASPEER::MakeMaker::Markdown::Pod.
 #
 #  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
@@ -10,7 +10,7 @@
 #
 #  <http://dev.perl.org/licenses/>
 #
-package ExtUtils::Markdown::Pod::MM;
+package ASPEER::MakeMaker::Markdown::Pod::MM;
 
 
 #  Compiler Pragma
@@ -22,9 +22,12 @@ no warnings qw(uninitialized);
 sub BEGIN {local $^W=0}
 
 
-#  Base Packages
+#  Base packages and shared utility functions
 #
-use ExtUtils::Markdown::Pod::MM::Util;
+use ASPEER::MakeMaker::MM ();
+use ASPEER::MakeMaker::MM::Util;
+use ASPEER::MakeMaker::Markdown::Pod::MM::Constant ();
+@ISA=qw(ASPEER::MakeMaker::MM);
 
 
 #  External Packages
@@ -228,7 +231,7 @@ __END__
 
 # NAME
 
-ExtUtils::Markdown::Pod::MM - MakeMaker integration for ExtUtils::Markdown::Pod
+ASPEER::MakeMaker::Markdown::Pod::MM - MakeMaker integration for ASPEER::MakeMaker::Markdown::Pod
 
 # SYNOPSIS
 
@@ -238,8 +241,8 @@ In `Makefile.PL`:
 BEGIN {
     use lib './lib';
     eval {
-        require ExtUtils::Markdown::Pod;
-        ExtUtils::Markdown::Pod->import;
+        require ASPEER::MakeMaker::Markdown::Pod;
+        ASPEER::MakeMaker::Markdown::Pod->import;
         1;
     };
 }
@@ -255,18 +258,22 @@ make readme
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod::MM` generates and executes the documentation targets
+`ASPEER::MakeMaker::Markdown::Pod::MM` generates and executes the documentation targets
 used by `ExtUtils::MakeMaker`. Markdown source selection, Markdown-to-POD
 conversion, and Perl source updates are delegated to `Markdown::Pod::Embed`.
 
-`ExtUtils::Markdown::Pod::MM::Import` installs the MakeMaker lifecycle hooks and
+This class inherits the common MakeMaker namespace from
+`ASPEER::MakeMaker::MM` and imports shared helper functions from
+`ASPEER::MakeMaker::MM::Util`.
+
+`ASPEER::MakeMaker::MM::Import` installs the MakeMaker lifecycle hooks and
 appends the target template. This module handles the resulting `doc` and
 `readme` invocations.
 
 # MAKEFILE INTEGRATION
 
 The module adds a postamble fragment containing targets that invoke
-`ExtUtils::Markdown::Pod::MM` from the generated Makefile.
+`ASPEER::MakeMaker::Markdown::Pod::MM` from the generated Makefile.
 
 `doc`
 : Finds Markdown files listed in `MANIFEST`, derives each target by removing
@@ -327,8 +334,8 @@ Adds generated support files to `MANIFEST`.
 
 # CAVEATS
 
-This module contains MakeMaker-specific target generation and execution. The
-hook installation is isolated in `MM::Import`, and Markdown/POD processing is
+This module contains MakeMaker-specific target execution. Hook installation is
+provided by `ASPEER::MakeMaker::MM::Import`, and Markdown/POD processing is
 isolated in `Markdown::Pod::Embed`.
 
 The implementation expects a traditional MakeMaker distribution layout with a
@@ -336,7 +343,7 @@ usable `MANIFEST` file.
 
 # SEE ALSO
 
-`ExtUtils::Markdown::Pod`, `ExtUtils::Markdown::Pod::MM::Import`,
+`ASPEER::MakeMaker::Markdown::Pod`, `ASPEER::MakeMaker::MM::Import`,
 `Markdown::Pod::Embed`, `ExtUtils::MakeMaker`, `ExtUtils::Manifest`
 
 # AUTHOR
@@ -345,7 +352,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.
@@ -362,7 +369,7 @@ Full license text is available at:
 
 =head1 NAME
 
-ExtUtils::Markdown::Pod::MM - MakeMaker integration for ExtUtils::Markdown::Pod
+ASPEER::MakeMaker::Markdown::Pod::MM - MakeMaker integration for ASPEER::MakeMaker::Markdown::Pod
 
 
 =head1 SYNOPSIS
@@ -373,8 +380,8 @@ In C<Makefile.PL>:
  BEGIN {
      use lib './lib';
      eval {
-         require ExtUtils::Markdown::Pod;
-         ExtUtils::Markdown::Pod->import;
+         require ASPEER::MakeMaker::Markdown::Pod;
+         ASPEER::MakeMaker::Markdown::Pod->import;
          1;
      };
  }
@@ -387,11 +394,15 @@ Then run:
 
 =head1 DESCRIPTION
 
-C<ExtUtils::Markdown::Pod::MM> generates and executes the documentation targets
+C<ASPEER::MakeMaker::Markdown::Pod::MM> generates and executes the documentation targets
 used by C<ExtUtils::MakeMaker>. Markdown source selection, Markdown-to-POD
 conversion, and Perl source updates are delegated to C<Markdown::Pod::Embed>.
 
-C<ExtUtils::Markdown::Pod::MM::Import> installs the MakeMaker lifecycle hooks and
+This class inherits the common MakeMaker namespace from
+C<ASPEER::MakeMaker::MM> and imports shared helper functions from
+C<ASPEER::MakeMaker::MM::Util>.
+
+C<ASPEER::MakeMaker::MM::Import> installs the MakeMaker lifecycle hooks and
 appends the target template. This module handles the resulting C<doc> and
 C<readme> invocations.
 
@@ -399,7 +410,7 @@ C<readme> invocations.
 =head1 MAKEFILE INTEGRATION
 
 The module adds a postamble fragment containing targets that invoke
-C<ExtUtils::Markdown::Pod::MM> from the generated Makefile.
+C<ASPEER::MakeMaker::Markdown::Pod::MM> from the generated Makefile.
 
 C<doc>
 : Finds Markdown files listed in C<MANIFEST>, derives each target by removing
@@ -484,8 +495,8 @@ Adds generated support files to C<MANIFEST>.
 
 =head1 CAVEATS
 
-This module contains MakeMaker-specific target generation and execution. The
-hook installation is isolated in C<MM::Import>, and Markdown/POD processing is
+This module contains MakeMaker-specific target execution. Hook installation is
+provided by C<ASPEER::MakeMaker::MM::Import>, and Markdown/POD processing is
 isolated in C<Markdown::Pod::Embed>.
 
 The implementation expects a traditional MakeMaker distribution layout with a
@@ -494,7 +505,7 @@ usable C<MANIFEST> file.
 
 =head1 SEE ALSO
 
-C<ExtUtils::Markdown::Pod>, C<ExtUtils::Markdown::Pod::MM::Import>,
+C<ASPEER::MakeMaker::Markdown::Pod>, C<ASPEER::MakeMaker::MM::Import>,
 C<Markdown::Pod::Embed>, C<ExtUtils::MakeMaker>, C<ExtUtils::Manifest>
 
 
@@ -505,7 +516,7 @@ Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
 
 =head1 LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 L<mailto:andrew.speer@isolutions.com.au>.

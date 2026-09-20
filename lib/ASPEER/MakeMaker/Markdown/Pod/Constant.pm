@@ -1,5 +1,5 @@
 #
-#  This file is part of ExtUtils::Markdown::Pod.
+#  This file is part of ASPEER::MakeMaker::Markdown::Pod.
 #
 #  This software is copyright (c) 2026 by Andrew Speer <andrew.speer@isolutions.com.au>.
 #
@@ -16,7 +16,7 @@
 
 #  Pragma
 #
-package ExtUtils::Markdown::Pod::Constant;
+package ASPEER::MakeMaker::Markdown::Pod::Constant;
 use strict qw(vars);
 use warnings;
 use vars qw($VERSION @ISA %EXPORT_TAGS @EXPORT_OK @EXPORT %Constant);
@@ -122,12 +122,12 @@ __END__
 
 # NAME
 
-ExtUtils::Markdown::Pod::Constant - constants for ExtUtils::Markdown::Pod
+ASPEER::MakeMaker::Markdown::Pod::Constant - constants for ASPEER::MakeMaker::Markdown::Pod
 
 # SYNOPSIS
 
 ```perl
-use ExtUtils::Markdown::Pod::Constant;
+use ASPEER::MakeMaker::Markdown::Pod::Constant;
 
 my $default_dialect = $OPTION_HR->{dialect};
 my $pandoc          = $PANDOC_EXE;
@@ -136,7 +136,7 @@ my $cmd             = $PANDOC_CMD_MD2TEXT_CR->($pandoc, '-');
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod::Constant` defines exported constants used by the core
+`ASPEER::MakeMaker::Markdown::Pod::Constant` defines exported constants used by the core
 processor and command-line tool.
 
 The constants are stored in `%Constant`, exported as package variables, and can
@@ -160,7 +160,7 @@ be overridden by local configuration files loaded at compile time.
 ## bin_find
 
 ```perl
-my $path = ExtUtils::Markdown::Pod::Constant::bin_find(qw(pandoc pandoc.exe));
+my $path = ASPEER::MakeMaker::Markdown::Pod::Constant::bin_find(qw(pandoc pandoc.exe));
 ```
 
 Searches `PATH` for the first executable-like file matching one of the supplied
@@ -172,8 +172,8 @@ empty string.
 Local constants can be overridden by files loaded from:
 
 ```text
-lib/ExtUtils/Markdown/Pod/Constant.pm.local
-~/.ExtUtils::Markdown::Pod::Constant.local
+lib/ASPEER/MakeMaker/Markdown/Pod/Constant.pm.local
+~/.ASPEER::MakeMaker::Markdown::Pod::Constant.local
 ```
 
 Those files are expected to return a hash reference suitable for merging into
@@ -181,7 +181,7 @@ Those files are expected to return a hash reference suitable for merging into
 
 # SEE ALSO
 
-`ExtUtils::Markdown::Pod`
+`ASPEER::MakeMaker::Markdown::Pod`
 
 # AUTHOR
 
@@ -189,7 +189,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.
@@ -206,21 +206,21 @@ Full license text is available at:
 
 =head1 NAME
 
-ExtUtils::Markdown::Pod::Constant - constants for ExtUtils::Markdown::Pod
+ASPEER::MakeMaker::Markdown::Pod::Constant - constants for ASPEER::MakeMaker::Markdown::Pod
 
 
 =head1 SYNOPSIS
 
 
- use ExtUtils::Markdown::Pod::Constant;
- 
+ use ASPEER::MakeMaker::Markdown::Pod::Constant;
+
  my $default_dialect = $OPTION_HR->{dialect};
  my $pandoc          = $PANDOC_EXE;
  my $cmd             = $PANDOC_CMD_MD2TEXT_CR->($pandoc, '-');
 
 =head1 DESCRIPTION
 
-C<ExtUtils::Markdown::Pod::Constant> defines exported constants used by the core
+C<ASPEER::MakeMaker::Markdown::Pod::Constant> defines exported constants used by the core
 processor and command-line tool.
 
 The constants are stored in C<%Constant>, exported as package variables, and can
@@ -247,7 +247,7 @@ C<$PANDOC_CMD_MD2TEXT_CR>
 =head2 bin_find
 
 
- my $path = ExtUtils::Markdown::Pod::Constant::bin_find(qw(pandoc pandoc.exe));
+ my $path = ASPEER::MakeMaker::Markdown::Pod::Constant::bin_find(qw(pandoc pandoc.exe));
 Searches C<PATH> for the first executable-like file matching one of the supplied
 names and returns a canonical path. If no candidate is found, it returns an
 empty string.
@@ -258,15 +258,15 @@ empty string.
 Local constants can be overridden by files loaded from:
 
 
- lib/ExtUtils/Markdown/Pod/Constant.pm.local
- ~/.ExtUtils::Markdown::Pod::Constant.local
+ lib/ASPEER/MakeMaker/Markdown/Pod/Constant.pm.local
+ ~/.ASPEER::MakeMaker::Markdown::Pod::Constant.local
 Those files are expected to return a hash reference suitable for merging into
 C<%Constant>.
 
 
 =head1 SEE ALSO
 
-C<ExtUtils::Markdown::Pod>
+C<ASPEER::MakeMaker::Markdown::Pod>
 
 
 =head1 AUTHOR
@@ -276,7 +276,7 @@ Andrew Speer L<mailto:andrew.speer@isolutions.com.au>
 
 =head1 LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 L<mailto:andrew.speer@isolutions.com.au>.

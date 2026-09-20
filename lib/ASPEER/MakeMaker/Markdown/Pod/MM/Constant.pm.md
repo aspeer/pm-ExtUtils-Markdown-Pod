@@ -1,21 +1,21 @@
 # NAME
 
-ExtUtils::Markdown::Pod::MM::Constant - constants for MakeMaker integration
+ASPEER::MakeMaker::Markdown::Pod::MM::Constant - constants for MakeMaker integration
 
 # SYNOPSIS
 
 ```perl
-use ExtUtils::Markdown::Pod::MM::Constant;
+use ASPEER::MakeMaker::Markdown::Pod::MM::Constant;
 
 my $postamble = $TEMPLATE_POSTAMBLE_FN;
-my $module    = $MM_PM;
-my $argv      = $MM_ARGV;
+my $module    = $MARKPOD_PM;
+my $argv      = $MARKPOD_PM_ARGV;
 ```
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod::MM::Constant` defines constants used by
-`ExtUtils::Markdown::Pod::MM` when it extends `ExtUtils::MakeMaker`.
+`ASPEER::MakeMaker::Markdown::Pod::MM::Constant` defines constants used by
+`ASPEER::MakeMaker::Markdown::Pod::MM` when it extends `ExtUtils::MakeMaker`.
 
 `MM_PREFIX` selects the private `MARKPOD_*` Makefile macro namespace used by
 the shared hook implementation. It is hook configuration and is not emitted as
@@ -30,11 +30,11 @@ variables should be passed back into the target dispatcher.
 `$TEMPLATE_POSTAMBLE_FN`
 : Path to the bundled `postamble.inc` template.
 
-`$MM_PM`
+`$MARKPOD_PM`
 : Module name invoked by the generated Makefile targets. This is normally
-  `ExtUtils::Markdown::Pod::MM`.
+  `ASPEER::MakeMaker::Markdown::Pod::MM`.
 
-`$MM_ARGV`
+`$MARKPOD_PM_ARGV`
 : Quoted list of MakeMaker variables passed to the target dispatcher so methods
   such as `doc` and `readme` can reconstruct their input parameters.
 
@@ -43,8 +43,8 @@ variables should be passed back into the target dispatcher.
 Local constants can be overridden by files loaded from:
 
 ```text
-lib/ExtUtils/Markdown/Pod/MM/Constant.pm.local
-~/.ExtUtils::Markdown::Pod::MM::Constant.local
+lib/ASPEER/MakeMaker/Markdown/Pod/MM/Constant.pm.local
+~/.ASPEER::MakeMaker::Markdown::Pod::MM::Constant.local
 ```
 
 Those files are expected to return a hash reference suitable for merging into
@@ -52,7 +52,7 @@ Those files are expected to return a hash reference suitable for merging into
 
 # SEE ALSO
 
-`ExtUtils::Markdown::Pod::MM`, `ExtUtils::MakeMaker`
+`ASPEER::MakeMaker::Markdown::Pod::MM`, `ExtUtils::MakeMaker`
 
 # AUTHOR
 
@@ -60,7 +60,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.

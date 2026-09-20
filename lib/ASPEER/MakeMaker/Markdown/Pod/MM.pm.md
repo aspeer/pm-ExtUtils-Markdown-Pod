@@ -1,6 +1,6 @@
 # NAME
 
-ExtUtils::Markdown::Pod::MM - MakeMaker integration for ExtUtils::Markdown::Pod
+ASPEER::MakeMaker::Markdown::Pod::MM - MakeMaker integration for ASPEER::MakeMaker::Markdown::Pod
 
 # SYNOPSIS
 
@@ -10,8 +10,8 @@ In `Makefile.PL`:
 BEGIN {
     use lib './lib';
     eval {
-        require ExtUtils::Markdown::Pod;
-        ExtUtils::Markdown::Pod->import;
+        require ASPEER::MakeMaker::Markdown::Pod;
+        ASPEER::MakeMaker::Markdown::Pod->import;
         1;
     };
 }
@@ -27,18 +27,22 @@ make readme
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod::MM` generates and executes the documentation targets
+`ASPEER::MakeMaker::Markdown::Pod::MM` generates and executes the documentation targets
 used by `ExtUtils::MakeMaker`. Markdown source selection, Markdown-to-POD
 conversion, and Perl source updates are delegated to `Markdown::Pod::Embed`.
 
-`ExtUtils::Markdown::Pod::MM::Import` installs the MakeMaker lifecycle hooks and
+This class inherits the common MakeMaker namespace from
+`ASPEER::MakeMaker::MM` and imports shared helper functions from
+`ASPEER::MakeMaker::MM::Util`.
+
+`ASPEER::MakeMaker::MM::Import` installs the MakeMaker lifecycle hooks and
 appends the target template. This module handles the resulting `doc` and
 `readme` invocations.
 
 # MAKEFILE INTEGRATION
 
 The module adds a postamble fragment containing targets that invoke
-`ExtUtils::Markdown::Pod::MM` from the generated Makefile.
+`ASPEER::MakeMaker::Markdown::Pod::MM` from the generated Makefile.
 
 `doc`
 : Finds Markdown files listed in `MANIFEST`, derives each target by removing
@@ -99,8 +103,8 @@ Adds generated support files to `MANIFEST`.
 
 # CAVEATS
 
-This module contains MakeMaker-specific target generation and execution. The
-hook installation is isolated in `MM::Import`, and Markdown/POD processing is
+This module contains MakeMaker-specific target execution. Hook installation is
+provided by `ASPEER::MakeMaker::MM::Import`, and Markdown/POD processing is
 isolated in `Markdown::Pod::Embed`.
 
 The implementation expects a traditional MakeMaker distribution layout with a
@@ -108,7 +112,7 @@ usable `MANIFEST` file.
 
 # SEE ALSO
 
-`ExtUtils::Markdown::Pod`, `ExtUtils::Markdown::Pod::MM::Import`,
+`ASPEER::MakeMaker::Markdown::Pod`, `ASPEER::MakeMaker::MM::Import`,
 `Markdown::Pod::Embed`, `ExtUtils::MakeMaker`, `ExtUtils::Manifest`
 
 # AUTHOR
@@ -117,7 +121,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.

@@ -1,6 +1,6 @@
 # NAME
 
-ExtUtils::Markdown::Pod - MakeMaker integration for Markdown-maintained POD
+ASPEER::MakeMaker::Markdown::Pod - MakeMaker integration for Markdown-maintained POD
 
 # SYNOPSIS
 
@@ -8,7 +8,7 @@ In `Makefile.PL`:
 
 ```perl
 use ExtUtils::MakeMaker;
-use ExtUtils::Markdown::Pod;
+use ASPEER::MakeMaker::Markdown::Pod;
 
 WriteMakefile(
     NAME         => 'Example',
@@ -24,8 +24,8 @@ For optional integration, load and import the module before `WriteMakefile`:
 use ExtUtils::MakeMaker;
 
 eval {
-    require ExtUtils::Markdown::Pod;
-    ExtUtils::Markdown::Pod->import();
+    require ASPEER::MakeMaker::Markdown::Pod;
+    ASPEER::MakeMaker::Markdown::Pod->import();
     1;
 };
 
@@ -40,12 +40,12 @@ additional lifecycle hooks and documentation targets. The equivalent explicit
 command-line activation is:
 
 ```text
-perl -MExtUtils::Markdown::Pod Makefile.PL
+perl -MASPEER::MakeMaker::Markdown::Pod Makefile.PL
 ```
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod` integrates documentation maintenance and the project's
+`ASPEER::MakeMaker::Markdown::Pod` integrates documentation maintenance and the project's
 established distribution conventions with `ExtUtils::MakeMaker`. Importing it
 from `Makefile.PL` installs the MakeMaker lifecycle hooks used to configure the
 generated Makefile, package metadata and install map, Git-SHA provenance, and
@@ -54,9 +54,11 @@ the active local library paths and MakeMaker extensions.
 
 The responsibilities are deliberately separated:
 
-- `ExtUtils::Markdown::Pod::MM::Import` installs and implements the MakeMaker
+- `ASPEER::MakeMaker::Markdown::Pod` inherits the common MakeMaker behavior
+  from `ASPEER::MakeMaker`.
+- `ASPEER::MakeMaker::MM::Import` installs and implements the MakeMaker
   lifecycle hooks.
-- `ExtUtils::Markdown::Pod::MM` generates and executes the `doc` and `readme`
+- `ASPEER::MakeMaker::Markdown::Pod::MM` generates and executes the `doc` and `readme`
   targets.
 - `Markdown::Pod::Embed` selects Markdown, converts it to POD, and updates Perl
   source files.
@@ -79,7 +81,8 @@ a program other than `Makefile.PL` does not alter `ExtUtils::MakeMaker`.
 
 # SEE ALSO
 
-`ExtUtils::Markdown::Pod::MM`, `ExtUtils::Markdown::Pod::MM::Import`,
+`ASPEER::MakeMaker`, `ASPEER::MakeMaker::Markdown::Pod::MM`,
+`ASPEER::MakeMaker::MM::Import`,
 `Markdown::Pod::Embed`, `ExtUtils::MakeMaker`
 
 # AUTHOR
@@ -88,7 +91,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.

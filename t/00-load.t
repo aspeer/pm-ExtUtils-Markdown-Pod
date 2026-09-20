@@ -5,11 +5,13 @@
 use Test::More qw(no_plan);
 use_ok( 'Markdown::Pod::Embed' );
 $_='caller value';
-use_ok( 'ExtUtils::Markdown::Pod' );
+use_ok( 'ASPEER::MakeMaker::Markdown::Pod' );
 is( $_, 'caller value', 'loading module preserves caller default variable' );
-ok( !exists $INC{'ExtUtils/Markdown/Pod/MM/Import.pm'},
-    'processor compatibility facade does not load MakeMaker integration' );
-use_ok( 'ExtUtils::Markdown::Pod::MM' );
-use_ok( 'ExtUtils::Markdown::Pod::MM::Util' );
-use_ok( 'ExtUtils::Markdown::Pod::Constant' );
-use_ok( 'ExtUtils::Markdown::Pod::MM::Import' );
+ok( ASPEER::MakeMaker::Markdown::Pod->isa('ASPEER::MakeMaker'),
+    'plugin inherits ASPEER::MakeMaker' );
+ok( exists $INC{'ASPEER/MakeMaker/MM/Import.pm'},
+    'plugin inherits the shared MakeMaker integration' );
+use_ok( 'ASPEER::MakeMaker::Markdown::Pod::MM' );
+use_ok( 'ASPEER::MakeMaker::MM::Util' );
+use_ok( 'ASPEER::MakeMaker::Markdown::Pod::Constant' );
+use_ok( 'ASPEER::MakeMaker::MM::Import' );

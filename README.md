@@ -1,30 +1,30 @@
 # NAME
 
-ExtUtils::Markdown::Pod - keep Perl documentation in Markdown and ship it as POD
+ASPEER::MakeMaker::Markdown::Pod - keep Perl documentation in Markdown and ship it as POD
 
 # SYNOPSIS
 
 With `ExtUtils::MakeMaker`:
 
 ```bash
-perl -MExtUtils::Markdown::Pod Makefile.PL
+perl -MASPEER::MakeMaker::Markdown::Pod Makefile.PL
 make doc
 ```
 
 From the command line:
 
 ```bash
-markpod.pl --inplace lib/My/Module.pm
-markpod.pl --extract-markdown lib/My/Module.pm > lib/My/Module.pm.md
-markpod.pl --extract-pod lib/My/Module.pm
+markpod --inplace lib/My/Module.pm
+markpod --extract-markdown lib/My/Module.pm > lib/My/Module.pm.md
+markpod --extract-pod lib/My/Module.pm
 ```
 
 From a Perl module or script:
 
 ```perl
-use ExtUtils::Markdown::Pod;
+use ASPEER::MakeMaker::Markdown::Pod;
 
-my $markpod = ExtUtils::Markdown::Pod->new({
+my $markpod = ASPEER::MakeMaker::Markdown::Pod->new({
     dialect  => 'GitHub',
     nobackup => 1,
 });
@@ -42,8 +42,8 @@ The same complete integration can be enabled optionally inside `Makefile.PL`:
 use ExtUtils::MakeMaker;
 
 eval {
-    require ExtUtils::Markdown::Pod;
-    ExtUtils::Markdown::Pod->import();
+    require ASPEER::MakeMaker::Markdown::Pod;
+    ASPEER::MakeMaker::Markdown::Pod->import();
     1;
 };
 
@@ -58,7 +58,7 @@ silent `eval` leaves the ordinary MakeMaker configuration in place.
 
 # DESCRIPTION
 
-`ExtUtils::Markdown::Pod` lets a distribution keep documentation in Markdown while
+`ASPEER::MakeMaker::Markdown::Pod` lets a distribution keep documentation in Markdown while
 still embedding generated POD in Perl modules and scripts. The Markdown source
 can live in a sidecar file such as `lib/My/Module.pm.md`, or inside a POD block
 marked with `=begin markdown` and `=end markdown`.
@@ -85,13 +85,15 @@ For example, `lib/My/Module.pm.md` is the source for
 
 The MakeMaker integration is deliberately separate from Markdown processing:
 
-- `ExtUtils::Markdown::Pod::MM::Import` installs and implements the MakeMaker
+- `ASPEER::MakeMaker::Markdown::Pod` inherits the common lifecycle behavior
+  from `ASPEER::MakeMaker`.
+- `ASPEER::MakeMaker::MM::Import` installs and implements the MakeMaker
   lifecycle hooks.
-- `ExtUtils::Markdown::Pod::MM` defines and runs the `doc` and `readme` targets.
+- `ASPEER::MakeMaker::Markdown::Pod::MM` defines and runs the `doc` and `readme` targets.
 - `Markdown::Pod::Embed` selects Markdown, converts it to POD, and updates the
   Perl source.
 
-The integration is loaded automatically when `ExtUtils::Markdown::Pod` is
+The integration is loaded automatically when `ASPEER::MakeMaker::Markdown::Pod` is
 imported by `Makefile.PL`. It preserves local library paths and the active
 MakeMaker extensions in the generated global `PERLRUN` command.
 
@@ -151,12 +153,11 @@ This distribution uses its own sidecar workflow. The important modules and the
 CLI have adjacent Markdown files:
 
 ```text
-lib/ExtUtils/Markdown/Pod.pm.md
-lib/ExtUtils/Markdown/Pod/MM.pm.md
-lib/ExtUtils/Markdown/Pod/Constant.pm.md
-lib/ExtUtils/Markdown/Pod/MM/Constant.pm.md
-lib/ExtUtils/Markdown/Pod/MM/Util.pm.md
-bin/markpod.pl.md
+lib/ASPEER/MakeMaker/Markdown/Pod.pm.md
+lib/ASPEER/MakeMaker/Markdown/Pod/MM.pm.md
+lib/ASPEER/MakeMaker/Markdown/Pod/Constant.pm.md
+lib/ASPEER/MakeMaker/Markdown/Pod/MM/Constant.pm.md
+bin/markpod.md
 README.md
 ```
 
@@ -166,8 +167,11 @@ those files. Running `make readme` regenerates `README`.
 # DEPENDENCIES
 
 The conversion implementation is supplied by `Markdown::Pod::Embed`. The
-`ExtUtils::Markdown::Pod` class retains the processing methods as a compatibility
+`ASPEER::MakeMaker::Markdown::Pod` class retains the processing methods as a compatibility
 facade, while new conversion-only code can use `Markdown::Pod::Embed` directly.
+The MakeMaker lifecycle and utility implementation is supplied by
+`ASPEER::MakeMaker`; this distribution does not vendor copies of its
+`MM::Import` or `MM::Util` modules.
 
 README generation uses `pandoc`. If `pandoc` is not available, README generation
 will fail and the README-specific test is skipped.
@@ -178,7 +182,7 @@ Andrew Speer <andrew.speer@isolutions.com.au>
 
 # LICENSE AND COPYRIGHT
 
-This file is part of ExtUtils::Markdown::Pod.
+This file is part of ASPEER::MakeMaker::Markdown::Pod.
 
 This software is copyright (c) 2026 by Andrew Speer
 <andrew.speer@isolutions.com.au>.
