@@ -53,10 +53,20 @@ $VERSION='0.011';
 sub doc {
 
 
-    #  Convert MD files to POD
+    #  Convert DocBook articles under doc to sibling Markdown files
     #
     my ($self, $param_hr)=(shift(), arg(@_));
     msg($self);
+    if (-d 'doc') {
+        require Docbook::Convert::Pandoc;
+        my $docbook_or=Docbook::Convert::Pandoc->new();
+        my $changed_fn_ar=$docbook_or->convert_articles('doc');
+        msg('docbook: %s: updated', $_) foreach @{$changed_fn_ar};
+    }
+
+
+    #  Convert MD files to POD
+    #
     my $exe_files_ar=$param_hr->{'EXE_FILES_AR'};
     my %exe_files=map {$_ => 1} @{$exe_files_ar};
     require Markdown::Pod::Embed;
@@ -259,8 +269,9 @@ make readme
 # DESCRIPTION
 
 `ASPEER::MakeMaker::Markdown::Pod::MM` generates and executes the documentation targets
-used by `ExtUtils::MakeMaker`. Markdown source selection, Markdown-to-POD
-conversion, and Perl source updates are delegated to `Markdown::Pod::Embed`.
+used by `ExtUtils::MakeMaker`. DocBook article conversion is delegated to
+`Docbook::Convert::Pandoc`. Markdown source selection, Markdown-to-POD conversion,
+and Perl source updates are delegated to `Markdown::Pod::Embed`.
 
 This class inherits the common MakeMaker namespace from
 `ASPEER::MakeMaker::MM` and imports shared helper functions from
@@ -276,10 +287,11 @@ The module adds a postamble fragment containing targets that invoke
 `ASPEER::MakeMaker::Markdown::Pod::MM` from the generated Makefile.
 
 `doc`
-: Finds Markdown files listed in `MANIFEST`, derives each target by removing
-  the trailing `.md`, and merges supported sidecars into matching `.pm`, `.pl`,
-  or executable files. Markdown files under `t/` are ignored so test fixtures
-  are not rewritten by documentation builds.
+: Recursively converts DocBook article XML beneath `doc/` to sibling Markdown
+  files without using `MANIFEST` as a discovery list. It then finds Markdown
+  files listed in `MANIFEST`, derives each target by removing the trailing
+  `.md`, and merges supported sidecars into matching `.pm`, `.pl`, or executable
+  files. Markdown files under `t/` are ignored so test fixtures are not rewritten.
 
 `readme`
 : Builds `README` from the best available Markdown source.
@@ -320,7 +332,8 @@ into a named hash used by `doc` and `readme`.
 
 ## doc
 
-Processes sidecar Markdown files from `MANIFEST` and updates supported Perl
+Converts DocBook article XML beneath `doc/` to sibling Markdown files, then
+processes sidecar Markdown files from `MANIFEST` and updates supported Perl
 targets in place.
 
 ## readme
@@ -395,8 +408,9 @@ Then run:
 =head1 DESCRIPTION
 
 C<ASPEER::MakeMaker::Markdown::Pod::MM> generates and executes the documentation targets
-used by C<ExtUtils::MakeMaker>. Markdown source selection, Markdown-to-POD
-conversion, and Perl source updates are delegated to C<Markdown::Pod::Embed>.
+used by C<ExtUtils::MakeMaker>. DocBook article conversion is delegated to
+C<Docbook::Convert::Pandoc>. Markdown source selection, Markdown-to-POD conversion,
+and Perl source updates are delegated to C<Markdown::Pod::Embed>.
 
 This class inherits the common MakeMaker namespace from
 C<ASPEER::MakeMaker::MM> and imports shared helper functions from
@@ -413,10 +427,11 @@ The module adds a postamble fragment containing targets that invoke
 C<ASPEER::MakeMaker::Markdown::Pod::MM> from the generated Makefile.
 
 C<doc>
-: Finds Markdown files listed in C<MANIFEST>, derives each target by removing
-  the trailing C<.md>, and merges supported sidecars into matching C<.pm>, C<.pl>,
-  or executable files. Markdown files under C<t/> are ignored so test fixtures
-  are not rewritten by documentation builds.
+: Recursively converts DocBook article XML beneath C<doc/> to sibling Markdown
+  files without using C<MANIFEST> as a discovery list. It then finds Markdown
+  files listed in C<MANIFEST>, derives each target by removing the trailing
+  C<.md>, and merges supported sidecars into matching C<.pm>, C<.pl>, or executable
+  files. Markdown files under C<t/> are ignored so test fixtures are not rewritten.
 
 C<readme>
 : Builds C<README> from the best available Markdown source.
@@ -478,7 +493,8 @@ into a named hash used by C<doc> and C<readme>.
 
 =head2 doc
 
-Processes sidecar Markdown files from C<MANIFEST> and updates supported Perl
+Converts DocBook article XML beneath C<doc/> to sibling Markdown files, then
+processes sidecar Markdown files from C<MANIFEST> and updates supported Perl
 targets in place.
 
 

@@ -60,12 +60,16 @@ The responsibilities are deliberately separated:
   lifecycle hooks.
 - `ASPEER::MakeMaker::Markdown::Pod::MM` generates and executes the `doc` and `readme`
   targets.
+- `Docbook::Convert::Pandoc` discovers DocBook articles beneath `doc/` and
+  converts them to sibling Markdown files.
 - `Markdown::Pod::Embed` selects Markdown, converts it to POD, and updates Perl
   source files.
 
-The documentation targets use files listed in `MANIFEST`. `doc` processes
-Markdown sidecars for matching Perl modules, scripts, and declared executable
-files. `readme` renders the best available README Markdown source as plain text.
+The `doc` target discovers DocBook articles beneath `doc/` independently of
+`MANIFEST`, converts them to sibling Markdown files, and then processes Markdown
+sidecars listed in `MANIFEST` for matching Perl modules, scripts, and declared
+executable files. `readme` renders the best available README Markdown source as
+plain text.
 
 # PROCESSOR COMPATIBILITY
 

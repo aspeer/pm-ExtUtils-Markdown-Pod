@@ -41,6 +41,7 @@ my %WriteMakefile=(
         'Carp'                  =>  0,
         'Data::Dumper'          =>  0,
         'Digest::MD5'           =>  0,
+        'Docbook::Convert'      =>  0,
         'ExtUtils::MM'          =>  0,
         'ExtUtils::Manifest'    =>  0,
         'Exporter'              =>  0,

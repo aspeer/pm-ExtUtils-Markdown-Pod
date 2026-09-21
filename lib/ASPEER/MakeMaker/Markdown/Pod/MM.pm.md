@@ -28,8 +28,9 @@ make readme
 # DESCRIPTION
 
 `ASPEER::MakeMaker::Markdown::Pod::MM` generates and executes the documentation targets
-used by `ExtUtils::MakeMaker`. Markdown source selection, Markdown-to-POD
-conversion, and Perl source updates are delegated to `Markdown::Pod::Embed`.
+used by `ExtUtils::MakeMaker`. DocBook article conversion is delegated to
+`Docbook::Convert::Pandoc`. Markdown source selection, Markdown-to-POD conversion,
+and Perl source updates are delegated to `Markdown::Pod::Embed`.
 
 This class inherits the common MakeMaker namespace from
 `ASPEER::MakeMaker::MM` and imports shared helper functions from
@@ -45,10 +46,11 @@ The module adds a postamble fragment containing targets that invoke
 `ASPEER::MakeMaker::Markdown::Pod::MM` from the generated Makefile.
 
 `doc`
-: Finds Markdown files listed in `MANIFEST`, derives each target by removing
-  the trailing `.md`, and merges supported sidecars into matching `.pm`, `.pl`,
-  or executable files. Markdown files under `t/` are ignored so test fixtures
-  are not rewritten by documentation builds.
+: Recursively converts DocBook article XML beneath `doc/` to sibling Markdown
+  files without using `MANIFEST` as a discovery list. It then finds Markdown
+  files listed in `MANIFEST`, derives each target by removing the trailing
+  `.md`, and merges supported sidecars into matching `.pm`, `.pl`, or executable
+  files. Markdown files under `t/` are ignored so test fixtures are not rewritten.
 
 `readme`
 : Builds `README` from the best available Markdown source.
@@ -89,7 +91,8 @@ into a named hash used by `doc` and `readme`.
 
 ## doc
 
-Processes sidecar Markdown files from `MANIFEST` and updates supported Perl
+Converts DocBook article XML beneath `doc/` to sibling Markdown files, then
+processes sidecar Markdown files from `MANIFEST` and updates supported Perl
 targets in place.
 
 ## readme

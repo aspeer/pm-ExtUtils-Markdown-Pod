@@ -49,7 +49,7 @@ my $embed_pm_fn=abs_path($INC{'Markdown/Pod/Embed.pm'});
 $embed_pm_fn=~s{[/\\]Markdown[/\\]Pod[/\\]Embed\.pm$}{};
 my $temporary_dn=tempdir(CLEANUP => 1);
 chdir($temporary_dn) || die "unable to chdir $temporary_dn, $!";
-make_path('lib', 'bin', 'local lib');
+make_path('lib', 'bin', 'doc', 'local lib/Docbook/Convert');
 my $local_lib_dn=abs_path('local lib');
 
 
@@ -71,6 +71,20 @@ MAKEFILE_PL
 blurp('lib/Sample.pm', "package Sample;\nour \$VERSION='0.001';\n1;\n");
 blurp('lib/Sample.pm.md', "# NAME\n\nSample - generated documentation\n");
 blurp('bin/sample.pl', "#!perl\nour \$VERSION='0.001';\nprint qq(sample\\n);\n");
+blurp('doc/guide.xml', "<?xml version=\"1.0\"?>\n<article><title>Guide</title></article>\n");
+blurp('local lib/Docbook/Convert/Pandoc.pm', <<'PANDOC_STUB');
+package Docbook::Convert::Pandoc;
+sub new {return bless({}, shift())}
+sub convert_articles {
+    my ($self, $root_dn)=@_;
+    die "unexpected document root\n" unless $root_dn eq 'doc';
+    open(my $output_fh, '>', 'doc/guide.md') || die "unable to open output: $!";
+    print {$output_fh} "# Guide\n" || die "unable to write output: $!";
+    close($output_fh) || die "unable to close output: $!";
+    return ['doc/guide.md'];
+}
+1;
+PANDOC_STUB
 blurp('LICENSE', "Sample license\n");
 blurp('MANIFEST', "Makefile.PL\nLICENSE\nbin/sample.pl\nlib/Sample.pm\nlib/Sample.pm.md\n");
 
@@ -148,6 +162,8 @@ my $make=$Config{'make'} || 'make';
 is(system($make, 'doc'), 0, 'generated doc target succeeds');
 like(slurp('lib/Sample.pm'), qr/^=head1 NAME$/m,
     'generated target delegates Markdown conversion');
+is(slurp('doc/guide.md'), "# Guide\n",
+    'generated target converts article XML absent from MANIFEST');
 
 
 #  Regenerate with optional integration declared inside Makefile.PL

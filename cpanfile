@@ -3,6 +3,7 @@ requires 'Cwd';
 requires 'Carp';
 requires 'Data::Dumper';
 requires 'Digest::MD5';
+requires 'Docbook::Convert';
 requires 'ExtUtils::MM';
 requires 'ExtUtils::Manifest';
 requires 'Exporter';

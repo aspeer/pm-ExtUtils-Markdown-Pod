@@ -98,9 +98,10 @@ imported by `Makefile.PL`. It preserves local library paths and the active
 MakeMaker extensions in the generated global `PERLRUN` command.
 
 `make doc`
-: Processes Markdown sidecars listed in `MANIFEST` and merges them into their
-  matching `.pm`, `.pl`, or executable targets. Markdown files under `t/` are
-  ignored so test fixtures are not rewritten by documentation builds.
+: Recursively converts DocBook article XML beneath `doc/` to sibling Markdown
+  files, independently of `MANIFEST`. It then processes Markdown sidecars listed
+  in `MANIFEST` and merges them into matching `.pm`, `.pl`, or executable targets.
+  Markdown files under `t/` are ignored so test fixtures are not rewritten.
 
 `make readme`
 : Builds `README` from an existing `README.md`. When neither README file exists,
