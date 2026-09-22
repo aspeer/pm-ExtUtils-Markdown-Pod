@@ -11,7 +11,7 @@ perl -MASPEER::MakeMaker::Markdown::Pod Makefile.PL
 make doc
 ```
 
-From the command line:
+The `markpod` command is installed by `Markdown::Pod::Embed`:
 
 ```bash
 markpod --inplace lib/My/Module.pm
@@ -19,12 +19,12 @@ markpod --extract-markdown lib/My/Module.pm > lib/My/Module.pm.md
 markpod --extract-pod lib/My/Module.pm
 ```
 
-From a Perl module or script:
+For processing without MakeMaker, use the engine directly:
 
 ```perl
-use ASPEER::MakeMaker::Markdown::Pod;
+use Markdown::Pod::Embed;
 
-my $markpod = ASPEER::MakeMaker::Markdown::Pod->new({
+my $markpod = Markdown::Pod::Embed->new({
     dialect  => 'GitHub',
     nobackup => 1,
 });
@@ -116,54 +116,21 @@ markpod: lib/My/Module.pm.md -> lib/My/Module.pm: starting merge
 markpod: lib/My/Module.pm.md -> lib/My/Module.pm: finished, updated pod
 ```
 
-# COMMAND LINE OPTIONS
-
-`--inplace`
-: Update the input file instead of writing the transformed source to STDOUT.
-
-`--file`, `--fn`, `--f`, `--in`
-: Input file. Positional filenames are also accepted.
-
-`--outfile`, `--output`, `--o`
-: File to write extracted Markdown, extracted POD, or transformed source to.
-
-`--extract-markdown`, `--extract`, `--md`, `--markdown`
-: Extract Markdown without writing generated POD back to the source file.
-
-`--extract-pod`, `--pod`
-: Extract generated POD.
-
-`--dialect`
-: Markdown dialect passed through to `Markdown::Pod`. The default is `GitHub`.
-
-`--nobackup`
-: Do not create a `.bak` file when updating in place.
-
-`--quiet`
-: Suppress status output.
-
-`--verbose`
-: Include skip and support messages that are normally hidden.
-
-`--debug`
-: Enable developer-oriented diagnostics.
-
 # DOGFOODING
 
 This distribution uses its own sidecar workflow. The important modules and the
-CLI have adjacent Markdown files:
+public integration classes have adjacent Markdown files:
 
 ```text
 lib/ASPEER/MakeMaker/Markdown/Pod.pm.md
 lib/ASPEER/MakeMaker/Markdown/Pod/MM.pm.md
 lib/ASPEER/MakeMaker/Markdown/Pod/Constant.pm.md
 lib/ASPEER/MakeMaker/Markdown/Pod/MM/Constant.pm.md
-bin/markpod.md
 README.md
 ```
 
-Running `make doc` regenerates embedded POD in the modules and script from
-those files. Running `make readme` regenerates `README`.
+Running `make doc` regenerates embedded POD in the modules from those files.
+Running `make readme` regenerates `README`.
 
 # DEPENDENCIES
 

@@ -1,28 +1,19 @@
-requires 'ASPEER::MakeMaker', '1.005';
+requires 'ASPEER::MakeMaker', '1.006';
 requires 'Cwd';
-requires 'Carp';
-requires 'Data::Dumper';
 requires 'Digest::MD5';
-requires 'Docbook::Convert';
-requires 'ExtUtils::MM';
+requires 'Docbook::Convert', '0.028';
 requires 'ExtUtils::Manifest';
 requires 'Exporter';
-requires 'Fcntl';
 requires 'File::Basename';
 requires 'File::Spec';
-requires 'FindBin';
-requires 'Getopt::Long';
-requires 'IO::File';
-requires 'Markdown::Pod::Embed', '0.010';
-requires 'Pod::Usage';
-requires 'base';
-requires 'constant';
+requires 'Markdown::Pod::Embed', '0.011';
+requires 'perl', '5.010';
 requires 'strict';
 requires 'vars';
 requires 'warnings';
 
 on configure => sub {
-    requires 'perl', '5.008';
+    requires 'perl', '5.010';
     requires 'ExtUtils::MakeMaker';
     requires 'version';
 };

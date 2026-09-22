@@ -1,27 +1,18 @@
-# INSTALLATION INSTRUCTIONS #
+# INSTALLATION
 
-The latest version of this software is always available from Github
+Install the released distribution with a CPAN client:
 
-```
-git clone https://github.com/aspeer/pm-ASPEER-MakeMaker-Markdown-Pod
+`cpanm ASPEER::MakeMaker::Markdown::Pod`
+
+To install a checkout from the authoritative Gitea repository:
+
+```sh
+git clone https://gitea.isolutions.com.au/aspeer/pm-ASPEER-MakeMaker-Markdown-Pod.git
 cd pm-ASPEER-MakeMaker-Markdown-Pod
-```
-
-If on a modern system:
-
-`cpan .`
-
-Or (faster, if available):
-
-`cpanm .`
-
-Failing that manual install: 
-
-```
 perl Makefile.PL
 make
 make test
 make install
 ```
 
-If installing manually, dependencies will have to be installed individually.
+Install declared prerequisites first when performing a manual installation.

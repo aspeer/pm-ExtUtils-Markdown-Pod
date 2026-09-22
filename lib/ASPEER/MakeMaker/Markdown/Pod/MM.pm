@@ -38,7 +38,7 @@ use Digest::MD5 qw(md5_hex);
 #  Version information in a formate suitable for CPAN etc. Must be
 #  all on one line
 #
-$VERSION='0.011';
+$VERSION='0.012';
 
 
 #  All done, init finished
@@ -49,7 +49,7 @@ $VERSION='0.011';
 #======================================================================================================================
 
 #  Makefile targets from here down
-# 
+#
 sub doc {
 
 
@@ -200,7 +200,7 @@ sub readme {
     #  Convert markdown to text
     #
     my $text=$markpod_or->markpod_markdown_text($md);
-    
+
 
     #  Update README only when changed
     #

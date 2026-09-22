@@ -30,7 +30,7 @@ use File::Basename qw(dirname);
 
 #  Version information
 #
-$VERSION='0.011';
+$VERSION='0.012';
 
 
 #  Get module file name and path, derive name of file to store local constants
@@ -47,9 +47,9 @@ my $local_fn=abs_path(__FILE__) . '.local';
 
     TEMPLATE_POSTAMBLE_FN =>
         File::Spec->catfile(dirname(abs_path(__FILE__)), 'postamble.inc'),
-        
+
     MARKPOD_PM => 'ASPEER::MakeMaker::Markdown::Pod::MM',
-    
+
     MARKPOD_PM_ARGV => join(',', qw[
         "$(NAME)"
         "$(NAME_SYM)"
